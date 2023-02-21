@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="t2\abstraction\GameBase.cpp">
+      <Filter>t2\abstraction</Filter>
+    </ClCompile>
+    <ClCompile Include="t2\abstraction\GameConnection.cpp">
+      <Filter>t2\abstraction</Filter>
+    </ClCompile>
+    <ClCompile Include="t2\abstraction\hooks\gameconnection_hooks.cpp">
+      <Filter>t2\abstraction\hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="t2\hooks\global_hooks.cpp">
+      <Filter>t2\hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="t2\abstraction\NetConnection.cpp">
+      <Filter>t2\abstraction</Filter>
+    </ClCompile>
+    <ClCompile Include="t2\abstraction\NetObject.cpp">
+      <Filter>t2\abstraction</Filter>
+    </ClCompile>
+    <ClCompile Include="t2\abstraction\SceneObject.cpp">
+      <Filter>t2\abstraction</Filter>
+    </ClCompile>
+    <ClCompile Include="t2\abstraction\ShapeBase.cpp">
+      <Filter>t2\abstraction</Filter>
+    </ClCompile>
+    <ClCompile Include="t2\abstraction\hooks\shapebase_hooks.cpp">
+      <Filter>t2\abstraction\hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="t2\abstraction\SimObject.cpp">
+      <Filter>t2\abstraction</Filter>
+    </ClCompile>
+    <ClCompile Include="t2\game data\player.cpp">
+      <Filter>t2\game data</Filter>
+    </ClCompile>
+    <ClCompile Include="t2\abstraction\Player.cpp">
+      <Filter>t2\abstraction</Filter>
+    </ClCompile>
+    <ClCompile Include="t2\abstraction\Camera.cpp">
+      <Filter>t2\abstraction</Filter>
+    </ClCompile>
+    <ClCompile Include="t2\abstraction\hooks\camera_hooks.cpp">
+      <Filter>t2\abstraction\hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="t2\settings\settings.cpp">
+      <Filter>t2\settings</Filter>
+    </ClCompile>
+    <ClCompile Include="keys\keys.cpp">
+      <Filter>keys</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="detours\detours.h">
+      <Filter>detours</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\abstraction\GameBase.h">
+      <Filter>t2\abstraction</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\abstraction\GameConnection.h">
+      <Filter>t2\abstraction</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\hooks\global_hooks.h">
+      <Filter>t2\hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\abstraction\Helper.h">
+      <Filter>t2\abstraction</Filter>
+    </ClInclude>
+    <ClInclude Include="json\json.hpp">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="plog\Log.h">
+      <Filter>plog</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\math.h">
+      <Filter>t2\math</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\abstraction\NetConnection.h">
+      <Filter>t2\abstraction</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\abstraction\NetObject.h">
+      <Filter>t2\abstraction</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\abstraction\SceneObject.h">
+      <Filter>t2\abstraction</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\abstraction\ShapeBase.h">
+      <Filter>t2\abstraction</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\abstraction\SimObject.h">
+      <Filter>t2\abstraction</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\game data\player.h">
+      <Filter>t2\game data</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\abstraction\Player.h">
+      <Filter>t2\abstraction</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\abstraction\Camera.h">
+      <Filter>t2\abstraction</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\settings\settings.h">
+      <Filter>t2\settings</Filter>
+    </ClInclude>
+    <ClInclude Include="keys\keys.h">
+      <Filter>keys</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="t2">
+      <UniqueIdentifier>{6413f602-b63a-442d-afd9-6a6fbc170517}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="t2\abstraction">
+      <UniqueIdentifier>{d1abaa05-f236-42ce-b076-b452f26283d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="t2\math">
+      <UniqueIdentifier>{0c1a9edd-4b84-47db-b966-7b71b868f678}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="t2\game data">
+      <UniqueIdentifier>{cf8ae9f5-5737-4303-a834-c347c27650cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="t2\abstraction\hooks">
+      <UniqueIdentifier>{e397f49f-da35-47d4-b60b-05698873f7a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="t2\hooks">
+      <UniqueIdentifier>{c84ec62d-e3e9-4838-bce3-30b0d129cffd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="detours">
+      <UniqueIdentifier>{5e55ef79-daea-4c33-8192-1480bea15886}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="plog">
+      <UniqueIdentifier>{b99dfcef-1061-4e61-a742-7f21a2fe954a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="json">
+      <UniqueIdentifier>{24838590-b68f-4226-b1b9-4191d6ddb568}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="keys">
+      <UniqueIdentifier>{5654a3bc-0940-4eaa-a425-c883bdd5b8c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="t2\settings">
+      <UniqueIdentifier>{cfc01d57-7320-4484-ae0d-9052b5ab6d3b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

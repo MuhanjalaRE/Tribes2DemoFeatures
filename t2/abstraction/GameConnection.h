@@ -22,6 +22,11 @@ namespace t2 {
 				void __fastcall ReadPacketHook(void*, void*, void*);
 				typedef void(__thiscall* ReadPacket)(void*, void*);
 				extern ReadPacket OriginalReadPacket;
+
+				void __fastcall DemoPlayBackCompleteHook(void*, void*);
+				typedef void(__thiscall* DemoPlayBackComplete)(void*);
+				extern DemoPlayBackComplete OriginalDemoPlayBackComplete;
+
 			}
 		}
 	}

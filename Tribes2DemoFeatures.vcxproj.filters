@@ -50,6 +50,12 @@
     <ClCompile Include="keys\keys.cpp">
       <Filter>keys</Filter>
     </ClCompile>
+    <ClCompile Include="t2\game data\demo.cpp">
+      <Filter>t2\game data</Filter>
+    </ClCompile>
+    <ClCompile Include="t2\abstraction\hooks\netconnection_hooks.cpp">
+      <Filter>t2\abstraction\hooks</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="detours\detours.h">
@@ -105,6 +111,9 @@
     </ClInclude>
     <ClInclude Include="keys\keys.h">
       <Filter>keys</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\game data\demo.h">
+      <Filter>t2\game data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -163,6 +163,7 @@
     <ClInclude Include="t2\abstraction\SceneObject.h" />
     <ClInclude Include="t2\abstraction\ShapeBase.h" />
     <ClInclude Include="t2\abstraction\SimObject.h" />
+    <ClInclude Include="t2\game data\demo.h" />
     <ClInclude Include="t2\game data\player.h" />
     <ClInclude Include="t2\hooks\global_hooks.h" />
     <ClInclude Include="t2\math.h" />
@@ -176,6 +177,7 @@
     <ClCompile Include="t2\abstraction\GameConnection.cpp" />
     <ClCompile Include="t2\abstraction\hooks\camera_hooks.cpp" />
     <ClCompile Include="t2\abstraction\hooks\gameconnection_hooks.cpp" />
+    <ClCompile Include="t2\abstraction\hooks\netconnection_hooks.cpp" />
     <ClCompile Include="t2\abstraction\hooks\shapebase_hooks.cpp" />
     <ClCompile Include="t2\abstraction\NetConnection.cpp" />
     <ClCompile Include="t2\abstraction\NetObject.cpp" />
@@ -183,6 +185,7 @@
     <ClCompile Include="t2\abstraction\SceneObject.cpp" />
     <ClCompile Include="t2\abstraction\ShapeBase.cpp" />
     <ClCompile Include="t2\abstraction\SimObject.cpp" />
+    <ClCompile Include="t2\game data\demo.cpp" />
     <ClCompile Include="t2\game data\player.cpp" />
     <ClCompile Include="t2\hooks\global_hooks.cpp" />
     <ClCompile Include="t2\settings\settings.cpp" />

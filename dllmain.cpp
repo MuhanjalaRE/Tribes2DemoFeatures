@@ -9,6 +9,7 @@
 #include <t2/abstraction/ShapeBase.h>
 #include <keys/keys.h>
 #include <t2/settings/settings.h>
+#include <t2/game data/demo.h>
 
 #ifdef _DEBUG
 #include <iostream>
@@ -16,6 +17,30 @@
 
 WNDPROC original_windowproc_callback = NULL;
 LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+typedef LRESULT(__stdcall* SetWindowLongPtr_)(HWND, int, long);
+SetWindowLongPtr_ OriginalSetWindowLongPtr;
+
+LRESULT __stdcall SetWindowLongPtrHook(HWND hWnd, int arg1, long arg2) {
+	LRESULT res;
+	//res = OriginalSetWindowLongPtr(hWnd, arg1, arg2);
+
+	if (arg1 != GWL_WNDPROC) {
+		return OriginalSetWindowLongPtr(hWnd, arg1, arg2);
+	}
+	else {
+		original_windowproc_callback = (WNDPROC)OriginalSetWindowLongPtr(hWnd, arg1, arg2);
+		OriginalSetWindowLongPtr(hWnd, GWL_WNDPROC, (LONG_PTR)CustomWindowProcCallback);
+		return (LRESULT)original_windowproc_callback;
+
+
+		/*
+		//OriginalSetWindowLongPtr(hWnd, arg1, arg2);
+		original_windowproc_callback = (WNDPROC)OriginalSetWindowLongPtr(hWnd, GWL_WNDPROC, (LONG_PTR)CustomWindowProcCallback);
+		return (LRESULT)original_windowproc_callback;
+		*/
+	}
+	//original_windowproc_callback = (WNDPROC)SetWindowLongPtr(hWnd, GWL_WNDPROC, (LONG_PTR)CustomWindowProcCallback);
+}
 
 void OnDLLProcessAttach(void) {
 
@@ -27,8 +52,15 @@ void OnDLLProcessAttach(void) {
     PLOG_DEBUG << "DLL injected successfully. Hooking game functions.";
 #endif
 
-    HWND hwnd = FindWindowA(NULL, "Tribes 2");
-    original_windowproc_callback = (WNDPROC)SetWindowLongPtr(hwnd, GWL_WNDPROC, (LONG_PTR)CustomWindowProcCallback);
+    HWND hWnd = FindWindow(NULL, L"Tribes 2");
+    original_windowproc_callback = (WNDPROC)SetWindowLongPtr(hWnd, GWL_WNDPROC, (LONG_PTR)CustomWindowProcCallback);
+
+	unsigned int setwindowlongptr_address = 0;
+	HMODULE hModule = GetModuleHandle(L"User32.dll");
+	if (hModule) {
+		setwindowlongptr_address = (unsigned int)GetProcAddress(hModule, "SetWindowLongW");
+		OriginalSetWindowLongPtr = (SetWindowLongPtr_)setwindowlongptr_address;
+	}
 
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
@@ -39,9 +71,21 @@ void OnDLLProcessAttach(void) {
 	DetourAttach(&(PVOID&)t2::hooks::fps::OriginalFpsUpdate, t2::hooks::fps::FpsUpdateHook);
     DetourAttach(&(PVOID&)t2::hooks::ShapeBase::OriginalGetEyeTransform, t2::hooks::ShapeBase::GetEyeTransformHook);
     DetourAttach(&(PVOID&)t2::abstraction::hooks::GameConnection::OriginalSetControlObject, t2::abstraction::hooks::GameConnection::SetControlObjectHook);
+	// This will probably get called in ReadPacket when a camera is the control object. Hook this and disable it so we don't have any damage flashes?
     DetourAttach(&(PVOID&)t2::abstraction::hooks::Camera::OriginalProcessTick, t2::abstraction::hooks::Camera::ProcessTickHook);
     DetourAttach(&(PVOID&)t2::abstraction::hooks::GameConnection::OriginalReadPacket, t2::abstraction::hooks::GameConnection::ReadPacketHook);
-    DetourAttach(&(PVOID&)t2::hooks::game::OriginalSetCameraFOV, t2::hooks::game::SetCameraFOVHook);
+	//DetourAttach(&(PVOID&)t2::hooks::game::OriginalSetCameraFOV, t2::hooks::game::SetCameraFOVHook);
+
+	
+	DetourAttach(&(PVOID&)t2::abstraction::hooks::GameConnection::OriginalDemoPlayBackComplete, t2::abstraction::hooks::GameConnection::DemoPlayBackCompleteHook);
+	/*
+	DetourAttach(&(PVOID&)t2::abstraction::hooks::NetConnection::OriginalStartDemoRecord, t2::abstraction::hooks::NetConnection::StartDemoRecordHook);
+	DetourAttach(&(PVOID&)t2::abstraction::hooks::NetConnection::OriginalStopDemoRecord, t2::abstraction::hooks::NetConnection::StopDemoRecordHook);
+	*/
+
+	if (setwindowlongptr_address)
+		DetourAttach(&(PVOID&)OriginalSetWindowLongPtr, SetWindowLongPtrHook);
+
 
     DetourTransactionCommit();
 
@@ -62,10 +106,19 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 }
 
 LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+	//PLOG_DEBUG << "CustomWindowProcCallback";
 	if (msg == WM_KEYDOWN) {
+		//PLOG_DEBUG << "Key down";
 		keys::key_states[wParam] = true;
 		if (wParam == VK_INSERT) {
 			t2::settings::LoadSettings();
+		}
+		if (wParam == 0x43){
+			//t2::settings::set_camera = !t2::settings::set_camera;
+			t2::game_data::demo::ToggleViewTarget();
+		}
+		if (wParam == VK_F3) {
+			t2::game_data::demo::ToggleRecording();
 		}
 	}
 	else if (msg == WM_KEYUP) {

@@ -2,6 +2,9 @@
 #include <t2/hooks/global_hooks.h>
 #include <string>
 #include <t2/abstraction/SceneObject.h>
+#include <t2/settings/settings.h>
+#include <t2/game data/demo.h>
+#include <t2/abstraction/Camera.h>
 
 
 namespace t2 {
@@ -9,24 +12,68 @@ namespace t2 {
 		namespace hooks {
 			namespace GameConnection {
 				SetControlObject OriginalSetControlObject = (SetControlObject)0x005FA970;
+
+				// This is basically only called via ReadPacket
 				void __fastcall SetControlObjectHook(void* this_gameconnection, void* _, void* object) {
 					t2::abstraction::GameConnection game_connection(this_gameconnection);
-					void* controlling_object_ = game_connection.controlling_object_;
-					if (controlling_object_){
-						t2::abstraction::SimObject sim_object(controlling_object_);
-						if (sim_object.namespace_name_ && std::string(sim_object.namespace_name_) == "Camera") {
+					t2::abstraction::SimObject target_control_object(object);
+
+					std::string target_control_object_namespace(target_control_object.namespace_name_);
+
+					// Always set the game connections control object to the camera when the game tries to - usually this will only happen when the player is dead. No need to check what our view target is - if it's already a camera then the control object doesn't change. If it's a player then we should set the control object to the camera anyway so it looks cleaner, and when the player spawns back in the control object will be set back to the player
+					if (target_control_object_namespace == "Camera"){
+						// [IGNORE - Read update] If we're already in camera mode a camera has been found, don't change to the new camera (not sure if a camera is created each death or if the same one is used)
+						// [Update] We don't really care if a new camera is created. It doesn't seem to be. The cameras transform (mObjToWorld) is updated on death. The call sequence is roughly Camera::SetTransform -> Camera::SetPosition -> SceneObject::SetTransform -> modify mObjToWorld. We could hook one of the camera functions in the chain (ie. Camera::SetTransform or Camera::SetPosition to return without calling the original function to prevent these changes. Is there any point to doing that? I doubt it. The ShapeBase::getEyeTransform function will be called regularly enough that we can just update the camera transform there. We can't hook getEyeTransform to return a fake a value, it seems the cameras actual transform in mObjToWorld is being referenced when drawing the camera PoV so mObjToWorld MUST be modified.
+						/*
+						// Comment this section due to the [Update] above
+						if (t2::game_data::demo::camera && t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera) {
+							return;
+						}
+						*/
+						t2::game_data::demo::camera = object;
+						t2::game_data::demo::is_player_alive = false;
+					} else if (target_control_object_namespace == "Player"){
+						t2::game_data::demo::player = object;
+						t2::game_data::demo::is_player_alive = true;
+
+						// We want to view the camera, so don't change the game connections control object to the player. This only happens if the camera exists of course. The camera will be found by latest immediately after the player dies for the first time in the demo
+						if (t2::game_data::demo::camera && t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera){
 							return;
 						}
 					}
+
 					return OriginalSetControlObject(this_gameconnection, object);
 				}
 
 				ReadPacket OriginalReadPacket = (ReadPacket)0x005FB9F0;
+
 				void __fastcall ReadPacketHook(void* this_gameconnection, void* _, void* bitstream) {
+					// ReadPacket is called quite early in the demo (if not immediately, so we set our demo connection from this function
+					t2::game_data::demo::game_connection = this_gameconnection;
+
+					// Call the original ReadPacket first so it can read all the moves and packet data and apply a new control object, damage flash, etc.
 					OriginalReadPacket(this_gameconnection, bitstream);
-					float* damage_flash = (float*)GET_OBJECT_POINTER_TO_VARIABLE_BY_OFFSET(this_gameconnection, 8466 * 4);
-					*damage_flash = 0;
+
+					// Right now we have to do this after calling original ReadPacket as the variables in the abstract object are not pointers and so the values wouldn't update if we created this abstract object prior to calling the original ReadPacket
+					t2::abstraction::GameConnection game_connection(this_gameconnection);
+
+					// Disable any damage flashes
+					if (t2::game_data::demo::camera && t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+						*(game_connection.damage_flash_) = 0;
+
+					return;
 				}
+
+				DemoPlayBackComplete OriginalDemoPlayBackComplete = (DemoPlayBackComplete)0x005FB950;
+				// If a demo is finished or early exited DemoPlaybackComplete is called. We'll clean up/reset our states here
+				void __fastcall DemoPlayBackCompleteHook(void* this_gameconnection, void* _) {
+					PLOG_DEBUG << "Demo play back complete";
+					t2::game_data::demo::game_connection = NULL;
+					t2::game_data::demo::view_target = t2::game_data::demo::ViewTarget::kCamera;
+					t2::game_data::demo::is_player_alive = false;
+					OriginalDemoPlayBackComplete(this_gameconnection);
+				}
+
 			}
 		}
 	}

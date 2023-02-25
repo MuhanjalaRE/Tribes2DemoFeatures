@@ -31,12 +31,13 @@ WNDPROC original_windowproc_callback = NULL;
 LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 typedef LRESULT(__stdcall* SetWindowLongPtr_)(HWND, int, long);
 SetWindowLongPtr_ OriginalSetWindowLongPtr = NULL;
-typedef BOOL(__stdcall* wglSwapBuffers)(void*);
+typedef BOOL(__stdcall* wglSwapBuffers)(int*);
 wglSwapBuffers OriginalwglSwapBuffers = NULL;
 bool show_imgui_demo_window = false;
 
 #ifdef USE_IMGUI
-BOOL __stdcall wglSwapBuffersHook(void* arg1) {
+BOOL __stdcall wglSwapBuffersHook(int* arg1) {
+	//PLOG_DEBUG << "HDC = " << (unsigned int)arg1;
 	ImGui_ImplOpenGL2_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
@@ -72,6 +73,13 @@ BOOL __stdcall wglSwapBuffersHook(void* arg1) {
 LRESULT __stdcall SetWindowLongPtrHook(HWND hWnd, int arg1, long arg2) {
 	LRESULT res;
 	//res = OriginalSetWindowLongPtr(hWnd, arg1, arg2);
+
+#ifdef USE_IMGUI
+	if (arg1 == GWL_WNDPROC) {
+		ImGui_ImplWin32_Shutdown();
+		ImGui_ImplWin32_Init(hWnd);
+	}
+#endif
 
 	if (arg1 != GWL_WNDPROC) {
 		return OriginalSetWindowLongPtr(hWnd, arg1, arg2);
@@ -203,6 +211,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	//PLOG_DEBUG << "CustomWindowProcCallback";
+	PLOG_DEBUG << "HWND = " << (unsigned int)hWnd;
 
 	bool* window_locked = (bool*)0x0083BFE5;
 

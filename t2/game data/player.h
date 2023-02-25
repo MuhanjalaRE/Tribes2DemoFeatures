@@ -4,8 +4,10 @@
 
 namespace t2 {
 	namespace game_data {
-		extern t2::abstraction::Player my_player;
-		extern std::vector<t2::abstraction::Player> players;
+		namespace player{
+			extern t2::abstraction::Player my_player;
+			extern std::vector<t2::abstraction::Player> players;
+		}
 	}
 }
 

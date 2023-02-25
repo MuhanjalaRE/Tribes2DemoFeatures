@@ -46,10 +46,13 @@ namespace t2 {
 					m_rot.x_ -= settings::camera_rotation_speed_pitch;
 				}
 
+				/*
 				if (m_rot.x_ > max_pitch)
 					m_rot.x_ = max_pitch;
 				else if (m_rot.x_ < -max_pitch)
 					m_rot.x_ = -max_pitch;
+
+				*/
 
 				if (keys::mouse_states[2] >= 1) {
 					m_rot.z_ += settings::camera_rotation_speed_yaw * keys::mouse_states[2];
@@ -66,7 +69,7 @@ namespace t2 {
 				}
 
 				static t2::math::Vector position = camera_object.object_to_world_->GetColumn(3);
-				static t2::math::Vector direction = camera_object.object_to_world_->GetColumn(3);
+				static t2::math::Vector direction = camera_object.object_to_world_->GetColumn(1);
 
 
 				if (keys::key_states[0x57]) {

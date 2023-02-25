@@ -27,6 +27,10 @@ namespace t2 {
 				typedef void(__thiscall* DemoPlayBackComplete)(void*);
 				extern DemoPlayBackComplete OriginalDemoPlayBackComplete;
 
+				bool __fastcall GetControlCameraTransformHook(void*, void*, float, void*);
+				typedef bool(__thiscall* GetControlCameraTransform)(void*, float, void*);
+				extern GetControlCameraTransform OriginalGetControlCameraTransform;
+
 			}
 		}
 	}

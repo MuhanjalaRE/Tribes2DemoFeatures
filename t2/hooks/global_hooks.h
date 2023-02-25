@@ -3,6 +3,8 @@
 //#include <t2/abstraction/SimObject.h>
 #include <t2/math.h>
 #include <t2/abstraction/SceneObject.h>
+#include <Windows.h>
+#include <imgui/imgui.h>
 
 namespace t2 {
 	namespace hooks {
@@ -22,6 +24,25 @@ namespace t2 {
 			typedef void(__cdecl* SetCameraFOV)(float fov);
 			extern SetCameraFOV OriginalSetCameraFOV;
 			void __cdecl SetCameraFOVHook(float fov);
+			
+
+			typedef bool(__cdecl* GameProcessCameraQuery)(void*);
+			extern GameProcessCameraQuery OriginalGameProcessCameraQuery;
+			bool __cdecl GameProcessCameraQueryHook(void*);
+		}
+
+		namespace platform {
+			typedef void (__cdecl* SetWindowLocked)(bool);
+			extern SetWindowLocked OriginalSetWindowLocked;
+			void __cdecl SetWindowLockedHook(bool locked);
+		}
+
+		namespace opengl {
+			extern std::vector<ImVec2> projection_buffer;
+			extern HANDLE game_mutex;
+			typedef int(__stdcall* GluProject)(double objx, double objy, double objz, const double modelMatrix[16], const double projMatrix[16], const int viewport[4], double* winx, double* winy, double* winz);
+			extern GluProject OriginalGluProject;
+			int __stdcall GluProjectHook(double objx, double objy, double objz, const double modelMatrix[16], const double projMatrix[16], const int viewport[4], double* winx, double* winy, double* winz);
 		}
 	}
 }

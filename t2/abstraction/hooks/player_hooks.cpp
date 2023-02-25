@@ -1,0 +1,28 @@
+#include <t2/abstraction/Player.h>
+#include <t2/game data/player.h>
+
+namespace t2 {
+	namespace abstraction {
+		namespace hooks {
+			namespace Player {
+				void __fastcall SetRenderPositionHook(void* this_player, void* _, void* arg1, void* arg2, void* arg3) {
+					t2::abstraction::Player player(this_player);
+					if (true) {
+						if (player.controlling_client_) {
+							
+						}
+						else {
+							if (GET_OBJECT_VARIABLE_BY_OFFSET(int, this_player, 512 * 4) || !GET_OBJECT_VARIABLE_BY_OFFSET(unsigned int, this_player, 0x26C)) {
+							} else {
+								t2::game_data::player::players.push_back(player);
+							}
+						}
+					}
+
+					OriginalPlayerSetRenderPosition(this_player, arg1, arg2, arg3);
+				}
+				PlayerSetRenderPosition OriginalPlayerSetRenderPosition = (PlayerSetRenderPosition)0x005D98C0;
+			}
+		}
+	}
+}

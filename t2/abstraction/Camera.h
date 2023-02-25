@@ -16,6 +16,7 @@ namespace t2 {
 			namespace Camera {
 				typedef void(__thiscall* SetPosition)(void*, void*, void*);
 				extern SetPosition OriginalSetPosition;
+				void __fastcall SetPositionHook(void*, void*, void*, void*);
 
 				typedef void(__thiscall* ProcessTick)(void*, void*);
 				extern ProcessTick OriginalProcessTick;

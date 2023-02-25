@@ -50,6 +50,7 @@ namespace t2 {
 				void __fastcall ReadPacketHook(void* this_gameconnection, void* _, void* bitstream) {
 					// ReadPacket is called quite early in the demo (if not immediately, so we set our demo connection from this function
 					t2::game_data::demo::game_connection = this_gameconnection;
+					t2::game_data::demo::is_player_alive = false;
 
 					// Call the original ReadPacket first so it can read all the moves and packet data and apply a new control object, damage flash, etc.
 					OriginalReadPacket(this_gameconnection, bitstream);
@@ -58,8 +59,28 @@ namespace t2 {
 					t2::abstraction::GameConnection game_connection(this_gameconnection);
 
 					// Disable any damage flashes
-					if (t2::game_data::demo::camera && t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+					//if (t2::game_data::demo::camera && t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
 						*(game_connection.damage_flash_) = 0;
+
+					
+					t2::abstraction::SimObject target_control_object(game_connection.controlling_object_);
+					std::string target_control_object_namespace(target_control_object.namespace_name_);
+
+					if (target_control_object_namespace == "Camera" && !t2::game_data::demo::camera) {
+						t2::game_data::demo::camera = game_connection.controlling_object_;
+						t2::game_data::demo::is_player_alive = false;
+					}
+					else if (target_control_object_namespace == "Player") {
+						t2::game_data::demo::player = game_connection.controlling_object_;
+						t2::game_data::demo::is_player_alive = true;
+						/*
+						if (t2::game_data::demo::camera && t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera) {
+							OriginalSetControlObject(this_gameconnection, t2::game_data::demo::camera);
+						}
+						*/
+					}
+
+
 
 					return;
 				}
@@ -71,8 +92,38 @@ namespace t2 {
 					t2::game_data::demo::game_connection = NULL;
 					t2::game_data::demo::view_target = t2::game_data::demo::ViewTarget::kCamera;
 					t2::game_data::demo::is_player_alive = false;
+					t2::game_data::demo::player = NULL;
+					t2::game_data::demo::camera = NULL;
 					OriginalDemoPlayBackComplete(this_gameconnection);
 				}
+
+
+				bool __fastcall GetControlCameraTransformHook(void* this_gameconnection, void* _, float dt, void* matrix) {
+					OriginalGetControlCameraTransform(this_gameconnection, dt, matrix);
+					t2::math::Matrix* mat = (t2::math::Matrix*)matrix;
+					//if (!t2::game_data::demo::camera) {
+						//mat->SetColumn(3, { -100,-300, 1000 });
+					//}
+					//else {
+					if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera && t2::game_data::demo::camera) {
+						//t2::hooks::ShapeBase::OriginalGetEyeTransform(t2::game_data::demo::camera, &(query_->cameraMatrix));
+						t2::hooks::ShapeBase::OriginalGetEyeTransform(t2::game_data::demo::camera, mat);
+						t2::math::Vector v = mat->GetColumn(3);
+						//PLOG_DEBUG << "GetCameraControlTransformHook\t" << v.x_ << "\t" << v.y_ << "\t" << v.z_;
+					}
+
+						/*
+						void* control_object = t2::abstraction::GameConnection(this_gameconnection).controlling_object_;
+						t2::abstraction::SceneObject sim_object(control_object);
+						*sim_object.object_to_world_ = *mat;
+						*(t2::math::Matrix*)((unsigned int)control_object + 424) = *mat;
+						*(t2::math::Matrix*)((unsigned int)control_object + 360) = *mat;
+						*/
+
+					//}
+					return true;
+				}
+				GetControlCameraTransform OriginalGetControlCameraTransform = (GetControlCameraTransform)0x005FAA80;
 
 			}
 		}

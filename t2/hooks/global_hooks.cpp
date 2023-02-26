@@ -28,6 +28,8 @@ namespace t2 {
 		namespace fps {
 			FpsUpdate OriginalFpsUpdate = (FpsUpdate)0x00564570;
 			void FpsUpdateHook(void) {
+				*((unsigned int*)0x0079B3E4) = t2::settings::show_player_model;
+				*((unsigned int*)0x0079B3E8) = t2::settings::show_weapon_model;
 				t2::hooks::game::OriginalSetCameraFOV(t2::settings::camera_fov);
 				OriginalFpsUpdate();
 				/*
@@ -58,9 +60,9 @@ namespace t2 {
 				}
 				*/
 
-				if (t2::game_data::demo::camera && t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera){
-					t2::abstraction::Camera camera_object(t2::game_data::demo::camera);
-					t2::abstraction::hooks::Camera::OriginalSetFlyMode(t2::game_data::demo::camera);
+				if (/*t2::game_data::demo::camera&&*/ t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera && t2::game_data::demo::player /* && t2::game_data::demo::is_player_alive*/) {
+					//t2::abstraction::Camera camera_object(t2::game_data::demo::camera);
+					//t2::abstraction::hooks::Camera::OriginalSetFlyMode(t2::game_data::demo::camera);
 
 
 					//PLOG_DEBUG << std::hex << t2::game_data::demo::camera << std::dec;
@@ -142,15 +144,36 @@ namespace t2 {
 						position += direction.Unit() * 1 * settings::camera_move_speed_z;
 					}
 
-					t2::abstraction::hooks::Camera::OriginalSetPosition(t2::game_data::demo::camera, &position, &t2::game_data::demo::camera_rotation);
-					static t2::math::Matrix m;
-					t2::hooks::ShapeBase::OriginalGetEyeTransform(t2::game_data::demo::camera, &m);
+					//position = { 0,0, 400 };
+
+					t2::math::Matrix mrender_obj_backup = GET_OBJECT_VARIABLE_BY_OFFSET(t2::math::Matrix, t2::game_data::demo::player, 360); //mRenderObjToWorld
+					
+					t2::math::Matrix target_matrix;
+					t2::math::Matrix xRot, zRot;
+					xRot.Set(t2::math::Vector(t2::game_data::demo::camera_rotation.x_, 0, 0));
+					zRot.Set(t2::math::Vector(0, 0, t2::game_data::demo::camera_rotation.z_));
+					t2::math::Matrix temp;
+					temp.Mul(zRot, xRot);
+					temp.SetColumn(3, position);
+					target_matrix = temp;
+
+					t2::abstraction::hooks::SceneObject::OriginalSetRenderTransform(t2::game_data::demo::player, &target_matrix);
+					//t2::abstraction::hooks::Player::OriginalPlayerSetRenderPosition(t2::game_data::demo::player, &position, &t2::game_data::demo::camera_rotation, 0);
+					//t2::abstraction::hooks::Camera::OriginalSetPosition(t2::game_data::demo::camera, &position, &t2::game_data::demo::camera_rotation);
+
+					t2::math::Matrix m = GET_OBJECT_VARIABLE_BY_OFFSET(t2::math::Matrix, t2::game_data::demo::player, 360);
+					//t2::hooks::ShapeBase::OriginalGetEyeTransform(t2::game_data::demo::player, &m);
+						//GET_OBJECT_POINTER_TO_VARIABLE_BY_OFFSET(t2::game_data::demo::player, 464);
+
 					direction = m.GetColumn(1);
 					position = m.GetColumn(3);
 
 					t2::game_data::demo::camera_position = position;
 					t2::game_data::demo::camera_direction = direction;
 
+					t2::math::Matrix* mm = (t2::math::Matrix*)GET_OBJECT_POINTER_TO_VARIABLE_BY_OFFSET(t2::game_data::demo::player, 360);
+					*mm = mrender_obj_backup;
+					t2::game_data::demo::camera_matrix = m;
 					//PLOG_DEBUG << "GetCameraControlTransformHook\t" << position.x_ << "\t" << position.y_ << "\t" << position.z_;
 				}
 				
@@ -262,14 +285,15 @@ namespace t2 {
 			GluProject OriginalGluProject = (GluProject)0x0;
 			int __stdcall GluProjectHook(double objx, double objy, double objz, const double modelMatrix[16], const double projMatrix[16], const int viewport[4], double* winx, double* winy, double* winz) {
 				bool result = OriginalGluProject(objx, objy, objz, modelMatrix, projMatrix, viewport, winx, winy, winz);
-				if (result) {
-					//*winz = -9999;
+				if (result && !t2::game_data::demo::show_iffs) {
+					*winz = -9999;
 
 					DWORD dwWaitResult = WaitForSingleObject(game_mutex, INFINITE);
 					
 					//projection_buffer.push_back({ (float)*winx, (float)*winy });
 					
 					ReleaseMutex(game_mutex);
+					result = false;
 					/*
 					ImGui::SetNextWindowPos({ 0, 0 });
 					ImGui::SetNextWindowSize({ 1920, 1080 });

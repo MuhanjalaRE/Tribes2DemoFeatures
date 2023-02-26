@@ -9,7 +9,9 @@ namespace t2 {
 		float camera_rotation_speed_pitch = 0.00075;
 		float camera_rotation_speed_yaw = 0.00075;
 		float camera_fov = 120;
-		bool set_camera = true;
+		//bool set_camera = true;
+		bool show_player_model = true;
+		bool show_weapon_model = true;
 
 		void LoadSettings(void) {
 			std::ifstream ifs("demo_settings.json");
@@ -26,6 +28,10 @@ namespace t2 {
 			camera_rotation_speed_yaw = camera_rotation_speed["yaw"].get<float>();
 
 			camera_fov = camera_json["fov"].get<float>();
+
+			show_player_model = camera_json["show_player_model"].get<bool>();
+			show_weapon_model = camera_json["show_weapon_model"].get<bool>();
+
 		}
 	}
 }

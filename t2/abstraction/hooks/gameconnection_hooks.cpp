@@ -68,7 +68,7 @@ namespace t2 {
 					t2::abstraction::SceneObject target_control_object(game_connection.controlling_object_);
 					std::string target_control_object_namespace(target_control_object.namespace_name_);
 
-					if (target_control_object_namespace == "Camera") {
+					if (target_control_object_namespace == "Camera" && false) {
 						if (!t2::game_data::demo::camera){
 							t2::game_data::demo::camera = game_connection.controlling_object_;
 							t2::game_data::demo::camera_position = target_control_object2.object_to_world_->GetColumn(3);
@@ -90,9 +90,28 @@ namespace t2 {
 						t2::game_data::demo::is_player_alive = false;
 					}
 					else if (target_control_object_namespace == "Player") {
+
+						if (!t2::game_data::demo::player) {
+							//t2::game_data::demo::camera = game_connection.controlling_object_;
+							t2::game_data::demo::camera_position = target_control_object.object_to_world_->GetColumn(3);
+							t2::game_data::demo::camera_direction = target_control_object.object_to_world_->GetColumn(1);
+							t2::math::Vector empty;
+
+							t2::math::Vector rot_ = GET_OBJECT_VARIABLE_BY_OFFSET(t2::math::Vector, target_control_object.pointer_to_torque_simobject_class_, 2380);
+							t2::math::Vector head_ = GET_OBJECT_VARIABLE_BY_OFFSET(t2::math::Vector, target_control_object.pointer_to_torque_simobject_class_, 2368);
+
+							t2::game_data::demo::camera_rotation = rot_;
+							t2::game_data::demo::camera_rotation.z_ += t2::game_data::demo::camera_yaw_offset;
+
+							//t2::game_data::demo::camera_rotation = *target_control_object2
+							//t2::abstraction::hooks::Camera::OriginalSetPosition(game_connection.controlling_object_, &t2::game_data::demo::camera_position, &empty);
+						}
+
 						t2::game_data::demo::player = game_connection.controlling_object_;
 						t2::game_data::demo::is_player_alive = true;
 						t2::game_data::demo::player_matrix = *target_control_object.object_to_world_;
+						
+						
 						/*
 						if (t2::game_data::demo::camera && t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera) {
 							OriginalSetControlObject(this_gameconnection, t2::game_data::demo::camera);
@@ -126,9 +145,10 @@ namespace t2 {
 						//mat->SetColumn(3, { -100,-300, 1000 });
 					//}
 					//else {
-					if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera && t2::game_data::demo::camera) {
+					if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera /* && t2::game_data::demo::camera */) {
 						//t2::hooks::ShapeBase::OriginalGetEyeTransform(t2::game_data::demo::camera, &(query_->cameraMatrix));
-						t2::hooks::ShapeBase::OriginalGetEyeTransform(t2::game_data::demo::camera, mat);
+						//t2::hooks::ShapeBase::OriginalGetEyeTransform(t2::game_data::demo::camera, mat);
+						*mat = t2::game_data::demo::camera_matrix;
 						//t2::math::Vector v = mat->GetColumn(3);
 						//PLOG_DEBUG << "GetCameraControlTransformHook\t" << v.x_ << "\t" << v.y_ << "\t" << v.z_;
 					}

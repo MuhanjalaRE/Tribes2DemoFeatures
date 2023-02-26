@@ -38,6 +38,8 @@ bool show_imgui_demo_window = false;
 #ifdef USE_IMGUI
 BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 	//PLOG_DEBUG << "HDC = " << (unsigned int)arg1;
+
+#ifdef USE_IMGUI
 	ImGui_ImplOpenGL2_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
@@ -59,9 +61,11 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 	ImGui::End();
 
 	if (show_imgui_demo_window){
+		/*
 		ImGui::Begin("Settings");
 		ImGui::SliderFloat("Camera yaw offset", &t2::game_data::demo::camera_yaw_offset, -2 * PI, 2 * PI);
 		ImGui::End();
+		*/
 	}
 	
 
@@ -73,7 +77,10 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 	ImGui::EndFrame();
 	ImGui::Render();
 	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+#endif
+	
 	return OriginalwglSwapBuffers(arg1);
+
 }
 #endif
 
@@ -233,6 +240,9 @@ LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPAR
 		}
 		if (wParam == VK_F3) {
 			t2::game_data::demo::ToggleRecording();
+		}
+		if (wParam == 0x56) {
+			t2::game_data::demo::show_iffs = !t2::game_data::demo::show_iffs;
 		}
 	}
 	

@@ -18,6 +18,7 @@ namespace t2 {
 			t2::math::Vector camera_rotation;
 			bool initialised = false;
 			float camera_yaw_offset = 0*1.875;
+			bool show_iffs = true;
 
 			void ToggleViewTarget(void){
 				if (!game_connection)
@@ -34,12 +35,13 @@ namespace t2 {
 					}
 					*/
 				} else if (view_target == ViewTarget::kPlayer){
+					// FLICKER OCCURS IN HERE
 					view_target = ViewTarget::kCamera;
 
 					if (!t2::game_data::demo::is_player_alive){
 						t2::game_data::demo::camera_position = t2::game_data::demo::player_matrix.GetColumn(3);
-						t2::abstraction::hooks::Camera::OriginalSetPosition(t2::game_data::demo::camera, &t2::game_data::demo::camera_position, &t2::game_data::demo::camera_rotation);
-						PLOG_DEBUG << "1Setting camera position to " << t2::game_data::demo::camera_position.x_ << " " << t2::game_data::demo::camera_position.y_ << " " << t2::game_data::demo::camera_position.z_;
+						//t2::abstraction::hooks::Camera::OriginalSetPosition(t2::game_data::demo::camera, &t2::game_data::demo::camera_position, &t2::game_data::demo::camera_rotation);
+						//PLOG_DEBUG << "1Setting camera position to " << t2::game_data::demo::camera_position.x_ << " " << t2::game_data::demo::camera_position.y_ << " " << t2::game_data::demo::camera_position.z_;
 					}
 					//t2::game_data::d
 					else {
@@ -47,8 +49,8 @@ namespace t2 {
 						t2::game_data::demo::camera_position = player_scene_object.object_to_world_->GetColumn(3);
 
 						t2::math::Matrix eye_matrix;
-						t2::hooks::ShapeBase::OriginalGetEyeTransform(t2::game_data::demo::player, &eye_matrix);
-						t2::game_data::demo::camera_position = eye_matrix.GetColumn(3);
+						//t2::hooks::ShapeBase::OriginalGetEyeTransform(t2::game_data::demo::player, &eye_matrix);
+						//t2::game_data::demo::camera_position = eye_matrix.GetColumn(3);
 
 						PLOG_DEBUG << "2Setting camera position to " << t2::game_data::demo::camera_position.x_ << " " << t2::game_data::demo::camera_position.y_ << " " << t2::game_data::demo::camera_position.z_;
 
@@ -63,7 +65,21 @@ namespace t2 {
 						rot_.x_ = head_.x_;
 						t2::game_data::demo::camera_rotation = rot_;
 
-						t2::abstraction::hooks::Camera::OriginalSetPosition(t2::game_data::demo::camera, &t2::game_data::demo::camera_position, &rot_);
+						/*
+						Prevent flickering when switching
+						*/
+						t2::math::Matrix target_matrix;
+						t2::math::Matrix xRot, zRot;
+						xRot.Set(t2::math::Vector(t2::game_data::demo::camera_rotation.x_, 0, 0));
+						zRot.Set(t2::math::Vector(0, 0, t2::game_data::demo::camera_rotation.z_));
+						t2::math::Matrix temp;
+						temp.Mul(zRot, xRot);
+						temp.SetColumn(3, t2::game_data::demo::camera_position);
+						target_matrix = temp;
+
+						t2::abstraction::hooks::SceneObject::OriginalSetRenderTransform(t2::game_data::demo::player, &target_matrix);
+						t2::game_data::demo::camera_matrix = target_matrix;
+						//t2::abstraction::hooks::Camera::OriginalSetPosition(t2::game_data::demo::camera, &t2::game_data::demo::camera_position, &rot_);
 
 					}
 

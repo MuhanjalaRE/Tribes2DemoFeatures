@@ -7,7 +7,9 @@ namespace t2 {
 		extern float camera_rotation_speed_pitch;
 		extern float camera_rotation_speed_yaw;
 		extern float camera_fov;
-		extern bool set_camera;
+		//extern bool set_camera;
+		extern bool show_player_model;
+		extern bool show_weapon_model;
 		void LoadSettings(void);
 	}
 }

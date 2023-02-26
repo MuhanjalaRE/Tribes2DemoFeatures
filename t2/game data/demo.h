@@ -22,6 +22,7 @@ namespace t2 {
 			extern t2::math::Vector camera_rotation;
 			extern float camera_yaw_offset;
 			extern bool initialised;
+			extern bool show_iffs;
 		}
 	}
 }

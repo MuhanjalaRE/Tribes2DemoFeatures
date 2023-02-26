@@ -58,6 +58,13 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 
 	ImGui::End();
 
+	if (show_imgui_demo_window){
+		ImGui::Begin("Settings");
+		ImGui::SliderFloat("Camera yaw offset", &t2::game_data::demo::camera_yaw_offset, -2 * PI, 2 * PI);
+		ImGui::End();
+	}
+	
+
 	t2::hooks::opengl::projection_buffer.clear();
 
 	ReleaseMutex(t2::hooks::opengl::game_mutex);
@@ -146,7 +153,7 @@ void OnDLLProcessAttach(void) {
 	DetourAttach(&(PVOID&)t2::abstraction::hooks::Camera::OriginalProcessTick, t2::abstraction::hooks::Camera::ProcessTickHook); //Hook this to disable any calls that update/lock the camera position
 
 	DetourAttach(&(PVOID&)t2::abstraction::hooks::GameConnection::OriginalReadPacket, t2::abstraction::hooks::GameConnection::ReadPacketHook);
-	//DetourAttach(&(PVOID&)t2::hooks::game::OriginalSetCameraFOV, t2::hooks::game::SetCameraFOVHook);
+	DetourAttach(&(PVOID&)t2::hooks::game::OriginalSetCameraFOV, t2::hooks::game::SetCameraFOVHook);
 
 
 	DetourAttach(&(PVOID&)t2::abstraction::hooks::GameConnection::OriginalDemoPlayBackComplete, t2::abstraction::hooks::GameConnection::DemoPlayBackCompleteHook);
@@ -211,7 +218,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	//PLOG_DEBUG << "CustomWindowProcCallback";
-	PLOG_DEBUG << "HWND = " << (unsigned int)hWnd;
+	//PLOG_DEBUG << "HWND = " << (unsigned int)hWnd;
 
 	bool* window_locked = (bool*)0x0083BFE5;
 

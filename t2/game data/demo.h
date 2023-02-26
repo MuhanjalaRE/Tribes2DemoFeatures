@@ -1,6 +1,7 @@
 #pragma once
 
 #include <t2/abstraction/Camera.h>
+#include <t2/math.h>
 
 namespace t2 {
 	namespace game_data {
@@ -14,6 +15,13 @@ namespace t2 {
 			extern bool is_player_alive;
 			void ToggleViewTarget(void);
 			void ToggleRecording(void);
+			extern t2::math::Matrix player_matrix;
+			extern t2::math::Matrix camera_matrix;
+			extern t2::math::Vector camera_position;
+			extern t2::math::Vector camera_direction;
+			extern t2::math::Vector camera_rotation;
+			extern float camera_yaw_offset;
+			extern bool initialised;
 		}
 	}
 }

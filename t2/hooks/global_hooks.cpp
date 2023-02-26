@@ -52,9 +52,11 @@ namespace t2 {
 				*/
 				t2::game_data::player::players.clear();
 
+				/*
 				if (!t2::game_data::demo::camera || t2::game_data::demo::view_target != t2::game_data::demo::ViewTarget::kCamera) {
 					return;
 				}
+				*/
 
 				if (t2::game_data::demo::camera && t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera){
 					t2::abstraction::Camera camera_object(t2::game_data::demo::camera);
@@ -63,21 +65,21 @@ namespace t2 {
 
 					//PLOG_DEBUG << std::hex << t2::game_data::demo::camera << std::dec;
 
-					static t2::math::Vector m_rot = *camera_object.m_rot_;
+					//static t2::math::Vector m_rot = *camera_object.m_rot_;
 					static const float max_pitch = 1.3962;
 
 					if (keys::mouse_states[3] >= 1) {
-						m_rot.x_ += settings::camera_rotation_speed_pitch * keys::mouse_states[3];
+						t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch * keys::mouse_states[3];
 					}
 					else if (keys::key_states[0x49]) {
-						m_rot.x_ += settings::camera_rotation_speed_pitch;
+						t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch;
 					}
 
 					if (keys::mouse_states[3] <= -1) {
-						m_rot.x_ -= settings::camera_rotation_speed_pitch * abs(keys::mouse_states[3]);
+						t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch * abs(keys::mouse_states[3]);
 					}
 					else if (keys::key_states[0x4B]) {
-						m_rot.x_ -= settings::camera_rotation_speed_pitch;
+						t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch;
 					}
 
 					/*/
@@ -88,29 +90,36 @@ namespace t2 {
 					*/
 
 					if (keys::mouse_states[2] >= 1) {
-						m_rot.z_ += settings::camera_rotation_speed_yaw * keys::mouse_states[2];
+						t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw * keys::mouse_states[2];
 					}
 					else if (keys::key_states[0x4C]) {
-						m_rot.z_ += settings::camera_rotation_speed_yaw;
+						t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw;
 					}
 
 					if (keys::mouse_states[2] <= -1) {
-						m_rot.z_ -= settings::camera_rotation_speed_yaw * abs(keys::mouse_states[2]);
+						t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw * abs(keys::mouse_states[2]);
 					}
 					else if (keys::key_states[0x4A]) {
-						m_rot.z_ -= settings::camera_rotation_speed_yaw;
+						t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw;
 					}
 
-					static t2::math::Vector position = camera_object.object_to_world_->GetColumn(3);
-					static t2::math::Vector direction = camera_object.object_to_world_->GetColumn(1);
+					//static t2::math::Vector position = camera_object.object_to_world_->GetColumn(3);
+					//static t2::math::Vector direction = camera_object.object_to_world_->GetColumn(1);
 
+					t2::math::Vector position = t2::game_data::demo::camera_position;
+					t2::math::Vector direction = t2::game_data::demo::camera_direction;
+					if (!t2::game_data::demo::initialised) {
+						//position = camera_object.object_to_world_->GetColumn(3);
+						//direction = camera_object.object_to_world_->GetColumn(1);
+						t2::game_data::demo::initialised = true;
+					}
 
 					if (keys::key_states[0x57]) {
-						direction.z_ = 0;
+						//direction.z_ = 0;
 						position += direction.Unit() * settings::camera_move_speed_xy;
 					}
 					if (keys::key_states[0x53]) {
-						direction.z_ = 0;
+						//direction.z_ = 0;
 						position += direction.Unit() * -1 * settings::camera_move_speed_xy;
 					}
 					if (keys::key_states[0x41]) {
@@ -133,11 +142,14 @@ namespace t2 {
 						position += direction.Unit() * 1 * settings::camera_move_speed_z;
 					}
 
-					t2::abstraction::hooks::Camera::OriginalSetPosition(t2::game_data::demo::camera, &position, &m_rot);
+					t2::abstraction::hooks::Camera::OriginalSetPosition(t2::game_data::demo::camera, &position, &t2::game_data::demo::camera_rotation);
 					static t2::math::Matrix m;
 					t2::hooks::ShapeBase::OriginalGetEyeTransform(t2::game_data::demo::camera, &m);
 					direction = m.GetColumn(1);
 					position = m.GetColumn(3);
+
+					t2::game_data::demo::camera_position = position;
+					t2::game_data::demo::camera_direction = direction;
 
 					//PLOG_DEBUG << "GetCameraControlTransformHook\t" << position.x_ << "\t" << position.y_ << "\t" << position.z_;
 				}

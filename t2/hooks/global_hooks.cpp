@@ -23,6 +23,10 @@ namespace t2 {
 				va_end(argptr);
 				return ret;
 			}
+
+			Executef OriginalExecutef = (Executef)0x004268D0;
+
+			
 		}
 
 		namespace fps {
@@ -30,6 +34,14 @@ namespace t2 {
 			void FpsUpdateHook(void) {
 				*((unsigned int*)0x0079B3E4) = t2::settings::show_player_model;
 				*((unsigned int*)0x0079B3E8) = t2::settings::show_weapon_model;
+				//*((unsigned int*)0x008423D4) = true; / Hide HUD HACK
+				
+				//t2::hooks::con::OriginalExecutef(2, "HideHudHACK", true);
+				
+				//first person or third person
+				if (t2::game_data::demo::game_connection) {
+					//*((int*)GET_OBJECT_POINTER_TO_VARIABLE_BY_OFFSET(t2::game_data::demo::game_connection, 33372)) = NULL;
+				}
 				t2::hooks::game::OriginalSetCameraFOV(t2::settings::camera_fov);
 				OriginalFpsUpdate();
 				/*
@@ -285,6 +297,7 @@ namespace t2 {
 			GluProject OriginalGluProject = (GluProject)0x0;
 			int __stdcall GluProjectHook(double objx, double objy, double objz, const double modelMatrix[16], const double projMatrix[16], const int viewport[4], double* winx, double* winy, double* winz) {
 				bool result = OriginalGluProject(objx, objy, objz, modelMatrix, projMatrix, viewport, winx, winy, winz);
+				//*winz = (0+1)/2;
 				if (result && !t2::game_data::demo::show_iffs) {
 					*winz = -9999;
 
@@ -309,6 +322,95 @@ namespace t2 {
 				}
 				return result;
 			}
+		}
+
+		namespace guicanvas {
+			extern RenderFrame OriginalRenderFrame = (RenderFrame)0x004B07F0;
+			void __fastcall RenderFrameHook(void* this_gui_object, void* _, bool prerenderonly) {
+				t2::abstraction::SimObject sim_obj(this_gui_object);
+				PLOG_DEBUG << sim_obj.namespace_name_;
+
+				for (DWORD* i = (DWORD*)*((DWORD*)this_gui_object + 14); i != (DWORD*)(*((DWORD*)this_gui_object + 14) + 4 * *((DWORD*)this_gui_object + 12)); ++i) {
+					DWORD* some_obj = (DWORD*)*i;
+					t2::abstraction::SimObject some_sim_obj(some_obj);
+					PLOG_DEBUG << "\t" << some_sim_obj.namespace_name_;
+				}
+
+				for (DWORD** j = (DWORD**)*((DWORD*)this_gui_object + 14); j != (DWORD**)(*((DWORD*)this_gui_object + 14) + 4 * *((DWORD*)this_gui_object + 12)); ++j) {
+					DWORD* some_obj = *j;
+					t2::abstraction::SimObject some_sim_obj(some_obj);
+					PLOG_DEBUG << "\t" << some_sim_obj.namespace_name_;
+				}
+
+				if ((unsigned int)this_gui_object == *(unsigned int*)0x009E9190) {
+
+				}
+				else {
+					//return;
+				}
+				//return;
+				OriginalRenderFrame(this_gui_object, prerenderonly);
+				
+			}
+		}
+
+		namespace guicontrol {
+			OnRender OriginalOnRender = (OnRender)0x4B6EE0;
+			void __fastcall OnRenderHook(void* this_obj, void* _, void* arg1, void* arg2, void* arg3) {
+
+				t2::abstraction::SimObject sim_obj(this_obj);
+				PLOG_DEBUG << sim_obj.namespace_name_;
+
+				//*(BYTE*)(((unsigned int*)this_obj)[18] + 55) = true;
+				//*(BYTE*)(((unsigned int*)this_obj)[18] + 68) = true;
+
+				OriginalOnRender(this_obj, arg1, arg2, arg3);
+				return;
+			}
+
+			OnRender OriginalOnRender2 = (OnRender)0x68A450;
+			void __fastcall OnRenderHook2(void* this_obj, void* _, void* arg1, void* arg2, void* arg3) {
+
+				t2::abstraction::SimObject sim_obj(this_obj);
+				PLOG_DEBUG << sim_obj.namespace_name_;
+
+				//*(BYTE*)(((unsigned int*)this_obj)[18] + 55) = true;
+				//*(BYTE*)(((unsigned int*)this_obj)[18] + 68) = true;
+
+				OriginalOnRender2(this_obj, arg1, arg2, arg3);
+				return;
+			}
+
+			RenderChildControls OriginalRenderChildControls = (RenderChildControls)0x4B6F60;
+			void __fastcall RenderChildControlsHook(void* this_gui_object, void* _, void* arg1, void* arg2, void* arg3) {
+
+				if (t2::game_data::demo::game_connection){
+
+					t2::abstraction::SimObject sim_obj(this_gui_object);
+					PLOG_DEBUG << sim_obj.namespace_name_;
+
+					for (DWORD* i = (DWORD*)*((DWORD*)this_gui_object + 14); i != (DWORD*)(*((DWORD*)this_gui_object + 14) + 4 * *((DWORD*)this_gui_object + 12)); ++i) {
+						DWORD* some_obj = (DWORD*)*i;
+						t2::abstraction::SimObject some_sim_obj(some_obj);
+						PLOG_DEBUG << "\t" << some_sim_obj.namespace_name_;
+
+						if (std::string(some_sim_obj.namespace_name_) == "navHud" /* || std::string(some_sim_obj.namespace_name_) == "helpTextGui"*/) {
+							*(BYTE*)((unsigned int)some_obj + 76) = true;
+						}
+						else {
+							*(BYTE*)((unsigned int)some_obj + 76) = false;
+						}
+					}
+				}
+
+				//*(BYTE*)(((unsigned int*)this_obj)[18] + 55) = true;
+				//*(BYTE*)(((unsigned int*)this_obj)[18] + 68) = true;
+
+				OriginalRenderChildControls(this_gui_object, arg1, arg2, arg3);
+				return;
+			}
+
+			
 		}
 	}
 }

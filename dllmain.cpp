@@ -35,7 +35,6 @@ typedef BOOL(__stdcall* wglSwapBuffers)(int*);
 wglSwapBuffers OriginalwglSwapBuffers = NULL;
 bool show_imgui_demo_window = false;
 
-#ifdef USE_IMGUI
 BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 	//PLOG_DEBUG << "HDC = " << (unsigned int)arg1;
 
@@ -82,7 +81,6 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 	return OriginalwglSwapBuffers(arg1);
 
 }
-#endif
 
 LRESULT __stdcall SetWindowLongPtrHook(HWND hWnd, int arg1, long arg2) {
 	LRESULT res;
@@ -177,6 +175,12 @@ void OnDLLProcessAttach(void) {
 	//DetourAttach(&(PVOID&)t2::abstraction::hooks::Player::OriginalPlayerSetRenderPosition, t2::abstraction::hooks::Player::SetRenderPositionHook);
 
 	DetourAttach(&(PVOID&)t2::hooks::platform::OriginalSetWindowLocked, t2::hooks::platform::SetWindowLockedHook);
+
+
+	DetourAttach(&(PVOID&)t2::hooks::guicanvas::OriginalRenderFrame, t2::hooks::guicanvas::RenderFrameHook);
+	DetourAttach(&(PVOID&)t2::hooks::guicontrol::OriginalOnRender, t2::hooks::guicontrol::OnRenderHook);
+	DetourAttach(&(PVOID&)t2::hooks::guicontrol::OriginalOnRender2, t2::hooks::guicontrol::OnRenderHook2);
+	DetourAttach(&(PVOID&)t2::hooks::guicontrol::OriginalRenderChildControls, t2::hooks::guicontrol::RenderChildControlsHook);
 
 	if (OriginalSetWindowLongPtr)
 		DetourAttach(&(PVOID&)OriginalSetWindowLongPtr, SetWindowLongPtrHook);

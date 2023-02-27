@@ -9,7 +9,7 @@ namespace t2 {
 			void* game_connection = NULL;
 			void* player = NULL;
 			void* camera = NULL;
-			ViewTarget view_target = ViewTarget::kCamera;
+			ViewTarget view_target = ViewTarget::kPlayer;
 			bool is_player_alive = false;
 			t2::math::Matrix player_matrix;
 			t2::math::Matrix camera_matrix;

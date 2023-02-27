@@ -48,6 +48,7 @@ namespace t2 {
 				ReadPacket OriginalReadPacket = (ReadPacket)0x005FB9F0;
 
 				void __fastcall ReadPacketHook(void* this_gameconnection, void* _, void* bitstream) {
+					*((unsigned int*)0x007A1A40) = false;
 					// ReadPacket is called quite early in the demo (if not immediately, so we set our demo connection from this function
 					t2::game_data::demo::game_connection = this_gameconnection;
 					t2::game_data::demo::is_player_alive = false;
@@ -129,7 +130,7 @@ namespace t2 {
 				void __fastcall DemoPlayBackCompleteHook(void* this_gameconnection, void* _) {
 					PLOG_DEBUG << "Demo play back complete";
 					t2::game_data::demo::game_connection = NULL;
-					t2::game_data::demo::view_target = t2::game_data::demo::ViewTarget::kCamera;
+					t2::game_data::demo::view_target = t2::game_data::demo::ViewTarget::kPlayer;
 					t2::game_data::demo::is_player_alive = false;
 					t2::game_data::demo::player = NULL;
 					t2::game_data::demo::camera = NULL;
@@ -139,6 +140,8 @@ namespace t2 {
 
 
 				bool __fastcall GetControlCameraTransformHook(void* this_gameconnection, void* _, float dt, void* matrix) {
+					*((unsigned int*)0x007A1A40) = false; // Disable first person
+
 					OriginalGetControlCameraTransform(this_gameconnection, dt, matrix);
 					t2::math::Matrix* mat = (t2::math::Matrix*)matrix;
 					//if (!t2::game_data::demo::camera) {

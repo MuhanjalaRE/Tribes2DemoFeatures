@@ -12,6 +12,9 @@ namespace t2 {
 			int __stdcall PrintfHook(char* format, ...);
 			typedef int(__stdcall* Printf)(char* format, ...);
 			extern Printf OriginalPrintf;
+
+			typedef const char* (__cdecl* Executef)(int argc, ...);
+			extern Executef OriginalExecutef;
 		}
 
 		namespace fps {
@@ -43,6 +46,23 @@ namespace t2 {
 			typedef int(__stdcall* GluProject)(double objx, double objy, double objz, const double modelMatrix[16], const double projMatrix[16], const int viewport[4], double* winx, double* winy, double* winz);
 			extern GluProject OriginalGluProject;
 			int __stdcall GluProjectHook(double objx, double objy, double objz, const double modelMatrix[16], const double projMatrix[16], const int viewport[4], double* winx, double* winy, double* winz);
+		}
+
+		namespace guicanvas {
+			typedef void(__thiscall* RenderFrame)(void*, bool);
+			extern RenderFrame OriginalRenderFrame;
+			void __fastcall RenderFrameHook(void*, void*, bool);
+		}
+
+		namespace guicontrol {
+			typedef void(__thiscall* OnRender)(void*, void*, void*, void*);
+			extern OnRender OriginalOnRender;
+			void __fastcall OnRenderHook(void*, void*, void*, void*, void*);
+			extern OnRender OriginalOnRender2;
+			void __fastcall OnRenderHook2(void*, void*, void*, void*, void*);
+			typedef void(__thiscall* RenderChildControls)(void*, void*, void*, void*);
+			extern RenderChildControls OriginalRenderChildControls;
+			void __fastcall RenderChildControlsHook(void*, void*, void*, void*, void*);
 		}
 	}
 }

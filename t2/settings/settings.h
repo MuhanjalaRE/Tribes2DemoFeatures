@@ -10,6 +10,7 @@ namespace t2 {
 		//extern bool set_camera;
 		extern bool show_player_model;
 		extern bool show_weapon_model;
+		extern float third_person_zoom_rate;
 		void LoadSettings(void);
 	}
 }

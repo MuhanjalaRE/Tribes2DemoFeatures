@@ -23,6 +23,10 @@ namespace t2 {
 			extern float camera_yaw_offset;
 			extern bool initialised;
 			extern bool show_iffs;
+			extern bool first_person;
+			extern float third_person_distance;
+
+			extern float debug_third_person_offset_scalar;
 		}
 	}
 }

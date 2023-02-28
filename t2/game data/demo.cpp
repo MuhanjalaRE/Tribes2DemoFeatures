@@ -19,6 +19,11 @@ namespace t2 {
 			bool initialised = false;
 			float camera_yaw_offset = 0*1.875;
 			bool show_iffs = true;
+			bool first_person = true;
+			float third_person_distance = 10;
+
+
+			float debug_third_person_offset_scalar = -0.194;
 
 			void ToggleViewTarget(void){
 				if (!game_connection)

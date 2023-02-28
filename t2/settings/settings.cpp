@@ -12,6 +12,7 @@ namespace t2 {
 		//bool set_camera = true;
 		bool show_player_model = true;
 		bool show_weapon_model = true;
+		float third_person_zoom_rate = 0.1;
 
 		void LoadSettings(void) {
 			std::ifstream ifs("demo_settings.json");
@@ -27,10 +28,14 @@ namespace t2 {
 			camera_rotation_speed_pitch = camera_rotation_speed["pitch"].get<float>();
 			camera_rotation_speed_yaw = camera_rotation_speed["yaw"].get<float>();
 
+			third_person_zoom_rate = camera_json["third_person_zoom_rate"].get<float>();
+
 			camera_fov = camera_json["fov"].get<float>();
 
 			show_player_model = camera_json["show_player_model"].get<bool>();
 			show_weapon_model = camera_json["show_weapon_model"].get<bool>();
+
+
 
 		}
 	}

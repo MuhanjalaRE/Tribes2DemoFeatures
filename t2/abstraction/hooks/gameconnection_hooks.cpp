@@ -48,7 +48,7 @@ namespace t2 {
 				ReadPacket OriginalReadPacket = (ReadPacket)0x005FB9F0;
 
 				void __fastcall ReadPacketHook(void* this_gameconnection, void* _, void* bitstream) {
-					*((unsigned int*)0x007A1A40) = false;
+					//*((unsigned int*)0x007A1A40) = false;
 					// ReadPacket is called quite early in the demo (if not immediately, so we set our demo connection from this function
 					t2::game_data::demo::game_connection = this_gameconnection;
 					t2::game_data::demo::is_player_alive = false;
@@ -136,11 +136,20 @@ namespace t2 {
 					t2::game_data::demo::camera = NULL;
 					t2::game_data::demo::initialised = false;
 					OriginalDemoPlayBackComplete(this_gameconnection);
+					t2::game_data::demo::first_person = true;
 				}
 
 
 				bool __fastcall GetControlCameraTransformHook(void* this_gameconnection, void* _, float dt, void* matrix) {
-					*((unsigned int*)0x007A1A40) = false; // Disable first person
+					/*
+					if (t2::game_data::demo::first_person) {
+						*((unsigned int*)0x007A1A40) = true;
+					}
+					else {
+						*((unsigned int*)0x007A1A40) = false; // Disable first person
+					}
+					*/
+					
 
 					OriginalGetControlCameraTransform(this_gameconnection, dt, matrix);
 					t2::math::Matrix* mat = (t2::math::Matrix*)matrix;
@@ -154,6 +163,50 @@ namespace t2 {
 						*mat = t2::game_data::demo::camera_matrix;
 						//t2::math::Vector v = mat->GetColumn(3);
 						//PLOG_DEBUG << "GetCameraControlTransformHook\t" << v.x_ << "\t" << v.y_ << "\t" << v.z_;
+					} else if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kPlayer && !t2::game_data::demo::first_person && t2::game_data::demo::is_player_alive && true) {
+						//*mat = t2::game_data::demo::camera_matrix;
+						//return true;
+
+						t2::math::Matrix matrix_bak = *mat;
+						t2::math::Vector position = matrix_bak.GetColumn(3);
+						t2::math::Vector player_direction = matrix_bak.GetColumn(1);
+						player_direction.z_ = 0;
+						player_direction = player_direction.Unit();
+						position = position + (player_direction * t2::game_data::demo::debug_third_person_offset_scalar);
+						//position.z_ -= 50;
+						t2::math::Vector dir = t2::game_data::demo::camera_matrix.GetColumn(1);
+						position -= dir * t2::game_data::demo::third_person_distance;
+						//matrix_bak.SetColumn(1, dir);
+						//matrix_bak.SetColumn(2, t2::game_data::demo::camera_matrix.GetColumn(2));
+						matrix_bak.SetColumn(3, position);
+						t2::game_data::demo::camera_matrix.SetColumn(3, position);
+						*mat = t2::game_data::demo::camera_matrix;
+						//*mat = t2::game_data::demo::camera_matrix;
+						return true;
+
+						t2::math::Matrix eye;
+						t2::math::Vector bottom = t2::abstraction::ShapeBase(t2::game_data::demo::player).object_to_world_->GetColumn(3);
+						t2::hooks::ShapeBase::OriginalGetEyeTransform(t2::game_data::demo::player, &eye);
+
+
+						t2::math::Vector original_position = eye.GetColumn(3);
+						original_position.z_ = ((eye.GetColumn(3).z_ + bottom.z_) / 2);
+						
+						//t2::math::Vector original_position = mat->GetColumn(3);
+						
+						*mat = t2::game_data::demo::camera_matrix;
+						t2::math::Vector direction_backup = mat->GetColumn(1);
+						t2::math::Vector direction = direction_backup;
+						/*
+						direction.z_ = 0;
+						if (direction.Magnitude() != 0)
+							direction = direction.Unit();
+						*/
+						original_position -= (direction * t2::game_data::demo::third_person_distance);
+						mat->SetColumn(3, original_position);
+						t2::game_data::demo::camera_matrix = *mat;
+						//eye.SetColumn(3, original_position);
+						//*mat = eye;
 					}
 
 						/*

@@ -72,7 +72,7 @@ namespace t2 {
 				}
 				*/
 
-				if (/*t2::game_data::demo::camera&&*/ t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera && t2::game_data::demo::player /* && t2::game_data::demo::is_player_alive*/) {
+				if (/*t2::game_data::demo::camera&&*/ (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera || (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kPlayer && !t2::game_data::demo::first_person)) && t2::game_data::demo::player /* && t2::game_data::demo::is_player_alive*/) {
 					//t2::abstraction::Camera camera_object(t2::game_data::demo::camera);
 					//t2::abstraction::hooks::Camera::OriginalSetFlyMode(t2::game_data::demo::camera);
 
@@ -83,17 +83,37 @@ namespace t2 {
 					static const float max_pitch = 1.3962;
 
 					if (keys::mouse_states[3] >= 1) {
-						t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch * keys::mouse_states[3];
+						if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+							t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch * keys::mouse_states[3];
+						else{
+							t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch * keys::mouse_states[3];
+							//t2::game_data::demo::camera_rotation.x_ = sin(t2::game_data::demo::camera_rotation.x_);
+						}
 					}
 					else if (keys::key_states[0x49]) {
-						t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch;
+						if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+							t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch * keys::mouse_states[3];
+						else{
+							t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch * keys::mouse_states[3];
+							//t2::game_data::demo::camera_rotation.x_ = sin(t2::game_data::demo::camera_rotation.x_);
+						}
 					}
 
 					if (keys::mouse_states[3] <= -1) {
-						t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch * abs(keys::mouse_states[3]);
+						if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+							t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch * abs(keys::mouse_states[3]);
+						else {
+							t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch * abs(keys::mouse_states[3]);
+							//t2::game_data::demo::camera_rotation.x_ = sin(t2::game_data::demo::camera_rotation.x_);
+						}
 					}
 					else if (keys::key_states[0x4B]) {
-						t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch;
+						if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+							t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch;
+						else {
+							t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch;
+							//t2::game_data::demo::camera_rotation.x_ = sin(t2::game_data::demo::camera_rotation.x_);
+						}
 					}
 
 					/*/
@@ -104,17 +124,37 @@ namespace t2 {
 					*/
 
 					if (keys::mouse_states[2] >= 1) {
-						t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw * keys::mouse_states[2];
+						if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+							t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw * keys::mouse_states[2];
+						else {
+							t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw * keys::mouse_states[2];
+							//t2::game_data::demo::camera_rotation.z_ = sin(t2::game_data::demo::camera_rotation.z_);
+						}
 					}
 					else if (keys::key_states[0x4C]) {
-						t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw;
+						if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+							t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw;
+						else {
+							t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw;
+							//t2::game_data::demo::camera_rotation.z_ = sin(t2::game_data::demo::camera_rotation.z_);
+						}
 					}
 
 					if (keys::mouse_states[2] <= -1) {
-						t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw * abs(keys::mouse_states[2]);
+						if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+							t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw * abs(keys::mouse_states[2]);
+						else {
+							t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw * abs(keys::mouse_states[2]);
+							//t2::game_data::demo::camera_rotation.z_ - sin(t2::game_data::demo::camera_rotation.z_);
+						}
 					}
 					else if (keys::key_states[0x4A]) {
-						t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw;
+						if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+							t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw;
+						else {
+							t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw;
+							//t2::game_data::demo::camera_rotation.z_ - sin(t2::game_data::demo::camera_rotation.z_);
+						}
 					}
 
 					//static t2::math::Vector position = camera_object.object_to_world_->GetColumn(3);
@@ -155,6 +195,21 @@ namespace t2 {
 						direction = t2::math::Vector(0, 0, 1).Unit();
 						position += direction.Unit() * 1 * settings::camera_move_speed_z;
 					}
+
+					/*
+					if (!t2::game_data::demo::first_person && false) {
+						t2::math::Matrix eye;
+						t2::math::Vector bottom = t2::abstraction::ShapeBase(t2::game_data::demo::player).object_to_world_->GetColumn(3);
+						t2::hooks::ShapeBase::OriginalGetEyeTransform(t2::game_data::demo::player, &eye);
+
+
+						t2::math::Vector original_position = eye.GetColumn(3);
+						original_position.z_ = ((eye.GetColumn(3).z_ + bottom.z_) / 2);
+						original_position -= (direction * t2::game_data::demo::third_person_distance * 10);
+						position = original_position;
+						PLOG_DEBUG << "x = " << position.x_ << "\ty = " << position.y_ << "\tz = " << position.z_;
+					}
+					*/
 
 					//position = { 0,0, 400 };
 
@@ -328,6 +383,7 @@ namespace t2 {
 			extern RenderFrame OriginalRenderFrame = (RenderFrame)0x004B07F0;
 			void __fastcall RenderFrameHook(void* this_gui_object, void* _, bool prerenderonly) {
 				t2::abstraction::SimObject sim_obj(this_gui_object);
+				/*
 				PLOG_DEBUG << sim_obj.namespace_name_;
 
 				for (DWORD* i = (DWORD*)*((DWORD*)this_gui_object + 14); i != (DWORD*)(*((DWORD*)this_gui_object + 14) + 4 * *((DWORD*)this_gui_object + 12)); ++i) {
@@ -348,6 +404,7 @@ namespace t2 {
 				else {
 					//return;
 				}
+				*/
 				//return;
 				OriginalRenderFrame(this_gui_object, prerenderonly);
 				
@@ -357,44 +414,39 @@ namespace t2 {
 		namespace guicontrol {
 			OnRender OriginalOnRender = (OnRender)0x4B6EE0;
 			void __fastcall OnRenderHook(void* this_obj, void* _, void* arg1, void* arg2, void* arg3) {
-
+				/*
 				t2::abstraction::SimObject sim_obj(this_obj);
 				PLOG_DEBUG << sim_obj.namespace_name_;
 
 				//*(BYTE*)(((unsigned int*)this_obj)[18] + 55) = true;
 				//*(BYTE*)(((unsigned int*)this_obj)[18] + 68) = true;
-
+				*/
 				OriginalOnRender(this_obj, arg1, arg2, arg3);
 				return;
 			}
 
 			OnRender OriginalOnRender2 = (OnRender)0x68A450;
 			void __fastcall OnRenderHook2(void* this_obj, void* _, void* arg1, void* arg2, void* arg3) {
-
+				/*
 				t2::abstraction::SimObject sim_obj(this_obj);
 				PLOG_DEBUG << sim_obj.namespace_name_;
 
 				//*(BYTE*)(((unsigned int*)this_obj)[18] + 55) = true;
 				//*(BYTE*)(((unsigned int*)this_obj)[18] + 68) = true;
-
+				*/
 				OriginalOnRender2(this_obj, arg1, arg2, arg3);
 				return;
 			}
 
 			RenderChildControls OriginalRenderChildControls = (RenderChildControls)0x4B6F60;
 			void __fastcall RenderChildControlsHook(void* this_gui_object, void* _, void* arg1, void* arg2, void* arg3) {
-
+				/*
 				if (t2::game_data::demo::game_connection){
-
 					t2::abstraction::SimObject sim_obj(this_gui_object);
-					PLOG_DEBUG << sim_obj.namespace_name_;
-
 					for (DWORD* i = (DWORD*)*((DWORD*)this_gui_object + 14); i != (DWORD*)(*((DWORD*)this_gui_object + 14) + 4 * *((DWORD*)this_gui_object + 12)); ++i) {
 						DWORD* some_obj = (DWORD*)*i;
 						t2::abstraction::SimObject some_sim_obj(some_obj);
-						PLOG_DEBUG << "\t" << some_sim_obj.namespace_name_;
-
-						if (std::string(some_sim_obj.namespace_name_) == "navHud" /* || std::string(some_sim_obj.namespace_name_) == "helpTextGui"*/) {
+						if (std::string(some_sim_obj.namespace_name_) == "navHud") {
 							*(BYTE*)((unsigned int)some_obj + 76) = true;
 						}
 						else {
@@ -402,10 +454,22 @@ namespace t2 {
 						}
 					}
 				}
-
+				*/
 				//*(BYTE*)(((unsigned int*)this_obj)[18] + 55) = true;
 				//*(BYTE*)(((unsigned int*)this_obj)[18] + 68) = true;
 
+				if (t2::game_data::demo::game_connection){
+					for (DWORD* i = (DWORD*)*((DWORD*)this_gui_object + 14); i != (DWORD*)(*((DWORD*)this_gui_object + 14) + 4 * *((DWORD*)this_gui_object + 12)); ++i) {
+						DWORD* some_obj = (DWORD*)*i;
+						t2::abstraction::SimObject some_sim_obj(some_obj);
+						if (std::string(some_sim_obj.namespace_name_) == "navHud") {
+							*(BYTE*)((unsigned int)some_obj + 76) = true;
+						}
+						else {
+							*(BYTE*)((unsigned int)some_obj + 76) = false;
+						}
+					}
+				}
 				OriginalRenderChildControls(this_gui_object, arg1, arg2, arg3);
 				return;
 			}

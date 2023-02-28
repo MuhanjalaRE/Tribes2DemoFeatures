@@ -60,11 +60,12 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 	ImGui::End();
 
 	if (show_imgui_demo_window){
-		/*
+	
 		ImGui::Begin("Settings");
 		ImGui::SliderFloat("Camera yaw offset", &t2::game_data::demo::camera_yaw_offset, -2 * PI, 2 * PI);
+		ImGui::SliderFloat("debug_third_person_scalar", &t2::game_data::demo::debug_third_person_offset_scalar, -100, 100);
 		ImGui::End();
-		*/
+		
 	}
 	
 
@@ -176,10 +177,11 @@ void OnDLLProcessAttach(void) {
 
 	DetourAttach(&(PVOID&)t2::hooks::platform::OriginalSetWindowLocked, t2::hooks::platform::SetWindowLockedHook);
 
-
+	/*
 	DetourAttach(&(PVOID&)t2::hooks::guicanvas::OriginalRenderFrame, t2::hooks::guicanvas::RenderFrameHook);
 	DetourAttach(&(PVOID&)t2::hooks::guicontrol::OriginalOnRender, t2::hooks::guicontrol::OnRenderHook);
 	DetourAttach(&(PVOID&)t2::hooks::guicontrol::OriginalOnRender2, t2::hooks::guicontrol::OnRenderHook2);
+	*/
 	DetourAttach(&(PVOID&)t2::hooks::guicontrol::OriginalRenderChildControls, t2::hooks::guicontrol::RenderChildControlsHook);
 
 	if (OriginalSetWindowLongPtr)
@@ -247,6 +249,9 @@ LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPAR
 		}
 		if (wParam == 0x56) {
 			t2::game_data::demo::show_iffs = !t2::game_data::demo::show_iffs;
+		}
+		if (wParam == 0x54) {
+			t2::game_data::demo::first_person = !t2::game_data::demo::first_person;
 		}
 	}
 	
@@ -320,6 +325,20 @@ LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPAR
 			}
 			else if (mouse_y < camera_mouse_y) {
 				keys::mouse_states[3] = -1 * abs(camera_mouse_y - mouse_y);
+			}
+		}
+
+		if (msg == WM_MOUSEWHEEL) {
+			int wparam_int = (int)wParam;
+			int wparam_int_hi_word = HIWORD(wparam_int);
+			if (wparam_int < 0) {
+				wparam_int_hi_word = HIWORD(-wparam_int);
+			}
+			if (wparam_int > 0) {
+				t2::game_data::demo::third_person_distance -= (t2::settings::third_person_zoom_rate * wparam_int_hi_word);
+			}
+			if (wparam_int < 0) {
+				t2::game_data::demo::third_person_distance += (t2::settings::third_person_zoom_rate * abs(wparam_int_hi_word));
 			}
 		}
 	}

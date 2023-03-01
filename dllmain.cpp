@@ -42,11 +42,15 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 	ImGui_ImplOpenGL2_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
+	
+	/*
 	if (show_imgui_demo_window)
 		ImGui::ShowDemoWindow(&show_imgui_demo_window);
+	*/
 
 	DWORD dwWaitResult = WaitForSingleObject(t2::hooks::opengl::game_mutex, INFINITE);
 
+	/*
 	ImGui::SetNextWindowPos({ 0, 0 });
 	ImGui::SetNextWindowSize({ 1920, 1080 });
 	ImGui::Begin("window", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBringToFrontOnFocus);
@@ -56,14 +60,19 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 	for (int i = 0; i < t2::hooks::opengl::projection_buffer.size(); i++) {
 		imgui_draw_list->AddCircleFilled({ t2::hooks::opengl::projection_buffer[i].x, (float)t2::hooks::opengl::projection_buffer[i].y }, 6, ImColor(255, 255, 0, 255), 0);
 	}
-
+	
 	ImGui::End();
+	*/
 
 	if (show_imgui_demo_window){
 	
-		ImGui::Begin("Settings");
-		ImGui::SliderFloat("Camera yaw offset", &t2::game_data::demo::camera_yaw_offset, -2 * PI, 2 * PI);
-		ImGui::SliderFloat("debug_third_person_scalar", &t2::game_data::demo::debug_third_person_offset_scalar, -100, 100);
+		ImGui::Begin("Settings", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+		//ImGui::SliderFloat("Camera yaw offset", &t2::game_data::demo::camera_yaw_offset, -2 * PI, 2 * PI);
+		//ImGui::SliderFloat("debug_third_person_scalar", &t2::game_data::demo::debug_third_person_offset_scalar, -100, 100);
+		ImGui::SliderInt("Camera FOV", (int*)&t2::settings::camera_fov, 1, 179);
+		ImGui::Checkbox("Show player model", &t2::settings::show_player_model);
+		ImGui::Checkbox("Show weapon model", &t2::settings::show_weapon_model);
+
 		ImGui::End();
 		
 	}
@@ -168,7 +177,7 @@ void OnDLLProcessAttach(void) {
 	DetourAttach(&(PVOID&)t2::abstraction::hooks::NetConnection::OriginalStopDemoRecord, t2::abstraction::hooks::NetConnection::StopDemoRecordHook);
 	*/
 
-	//DetourAttach(&(PVOID&)t2::hooks::game::OriginalGameProcessCameraQuery, t2::hooks::game::GameProcessCameraQueryHook);
+	DetourAttach(&(PVOID&)t2::hooks::game::OriginalGameProcessCameraQuery, t2::hooks::game::GameProcessCameraQueryHook);
 	DetourAttach(&(PVOID&)t2::abstraction::hooks::GameConnection::OriginalGetControlCameraTransform, t2::abstraction::hooks::GameConnection::GetControlCameraTransformHook);
 
 	DetourAttach(&(PVOID&)t2::abstraction::hooks::Camera::OriginalSetPosition, t2::abstraction::hooks::Camera::SetPositionHook);
@@ -177,12 +186,17 @@ void OnDLLProcessAttach(void) {
 
 	DetourAttach(&(PVOID&)t2::hooks::platform::OriginalSetWindowLocked, t2::hooks::platform::SetWindowLockedHook);
 
-	/*
+	
 	DetourAttach(&(PVOID&)t2::hooks::guicanvas::OriginalRenderFrame, t2::hooks::guicanvas::RenderFrameHook);
 	DetourAttach(&(PVOID&)t2::hooks::guicontrol::OriginalOnRender, t2::hooks::guicontrol::OnRenderHook);
 	DetourAttach(&(PVOID&)t2::hooks::guicontrol::OriginalOnRender2, t2::hooks::guicontrol::OnRenderHook2);
-	*/
+	/**/
 	DetourAttach(&(PVOID&)t2::hooks::guicontrol::OriginalRenderChildControls, t2::hooks::guicontrol::RenderChildControlsHook);
+
+
+	//(&(PVOID&)t2::hooks::guicontrol::Originalsub_505740, t2::hooks::guicontrol::sub_505740Hook); // called by sub_506870, this is what draws the IFFs
+	//DetourAttach(&(PVOID&)t2::hooks::guicontrol::Originalsub_5046A0, t2::hooks::guicontrol::sub_5046A0Hook); // called by sub_506870, this is required to draw both IFFS and player name and health bar
+	//DetourAttach(&(PVOID&)t2::hooks::guicontrol::Originalsub_506870, t2::hooks::guicontrol::sub_506870Hook); // this calls sub_506870, this draws the player name and health bar
 
 	if (OriginalSetWindowLongPtr)
 		DetourAttach(&(PVOID&)OriginalSetWindowLongPtr, SetWindowLongPtrHook);
@@ -214,6 +228,8 @@ void OnDLLProcessAttach(void) {
 
 	*((float*)(0x0075C838)) = 2100*100;
 	*/
+
+
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {

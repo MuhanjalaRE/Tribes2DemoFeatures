@@ -34,6 +34,17 @@ namespace t2 {
 			void FpsUpdateHook(void) {
 				*((unsigned int*)0x0079B3E4) = t2::settings::show_player_model;
 				*((unsigned int*)0x0079B3E8) = t2::settings::show_weapon_model;
+
+				/*
+				*((float*)0x762A3C) = 179;
+				*((float*)0x762C68) = 179;
+				*((float*)0x00763E08) = 179;
+				*((float*)0x0077CAD8) = 179;
+				*((float*)0x00795C08) = 179;
+
+				*((float*)0x762A40) = 1;
+				*/
+
 				//*((unsigned int*)0x008423D4) = true; / Hide HUD HACK
 				
 				//t2::hooks::con::OriginalExecutef(2, "HideHudHACK", true);
@@ -42,7 +53,7 @@ namespace t2 {
 				if (t2::game_data::demo::game_connection) {
 					//*((int*)GET_OBJECT_POINTER_TO_VARIABLE_BY_OFFSET(t2::game_data::demo::game_connection, 33372)) = NULL;
 				}
-				t2::hooks::game::OriginalSetCameraFOV(t2::settings::camera_fov);
+				//t2::hooks::game::OriginalSetCameraFOV(t2::settings::camera_fov);
 				OriginalFpsUpdate();
 				/*
 				if (t2::game_data::demo::game_connection){
@@ -92,9 +103,9 @@ namespace t2 {
 					}
 					else if (keys::key_states[0x49]) {
 						if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
-							t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch * keys::mouse_states[3];
+							t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch;
 						else{
-							t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch * keys::mouse_states[3];
+							t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch;
 							//t2::game_data::demo::camera_rotation.x_ = sin(t2::game_data::demo::camera_rotation.x_);
 						}
 					}
@@ -302,38 +313,14 @@ namespace t2 {
 					return true;
 				}
 				*/
-				query_->farPlane = 10000000;
-				query_->fov = 180;
-				
 
-
-				if (!t2::game_data::demo::camera) {
-					//query_->cameraMatrix.SetColumn(3, { -100,-300, 1000 });
+				bool result = OriginalGameProcessCameraQuery(query);
+				//query_->farPlane = 10000000;
+				if (result){
+					query_->fov = t2::math::mDegToRad(t2::settings::camera_fov);
 				}
-				else {
-					if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera) {
-						bool v = OriginalGameProcessCameraQuery(query);
-						t2::hooks::ShapeBase::OriginalGetEyeTransform(t2::game_data::demo::camera, &(query_->cameraMatrix));
-						//t2::math::Matrix m = query_->cameraMatrix;
-						
-						//query_->cameraMatrix = m;
-						//query_->object = t2::game_data::demo::camera;
-						
-						//t2::abstraction::hooks::GameConnection::OriginalSetControlObject(t2::game_data::demo::game_connection, t2::game_data::demo::camera);
-						return v;
-					}
-
-
-					
-					/*
-					player_matrix = *t2::abstraction::SceneObject(t2::game_data::demo::player).object_to_world_;
-					t2::abstraction::hooks::SceneObject::OriginalSetRenderTransform(t2::game_data::demo::player, &(query_->cameraMatrix));
-					*t2::abstraction::SceneObject(t2::game_data::demo::player).object_to_world_ = query_->cameraMatrix;
-					*/
-				}
-				return OriginalGameProcessCameraQuery(query);
 				//memset(&(query_->cameraMatrix), 0, sizeof(t2::math::Matrix));
-				return true;
+				return result;
 			}
 		}
 
@@ -382,8 +369,9 @@ namespace t2 {
 		namespace guicanvas {
 			extern RenderFrame OriginalRenderFrame = (RenderFrame)0x004B07F0;
 			void __fastcall RenderFrameHook(void* this_gui_object, void* _, bool prerenderonly) {
-				t2::abstraction::SimObject sim_obj(this_gui_object);
 				/*
+				t2::abstraction::SimObject sim_obj(this_gui_object);
+
 				PLOG_DEBUG << sim_obj.namespace_name_;
 
 				for (DWORD* i = (DWORD*)*((DWORD*)this_gui_object + 14); i != (DWORD*)(*((DWORD*)this_gui_object + 14) + 4 * *((DWORD*)this_gui_object + 12)); ++i) {
@@ -391,7 +379,8 @@ namespace t2 {
 					t2::abstraction::SimObject some_sim_obj(some_obj);
 					PLOG_DEBUG << "\t" << some_sim_obj.namespace_name_;
 				}
-
+				*/
+				/*
 				for (DWORD** j = (DWORD**)*((DWORD*)this_gui_object + 14); j != (DWORD**)(*((DWORD*)this_gui_object + 14) + 4 * *((DWORD*)this_gui_object + 12)); ++j) {
 					DWORD* some_obj = *j;
 					t2::abstraction::SimObject some_sim_obj(some_obj);
@@ -413,11 +402,33 @@ namespace t2 {
 
 		namespace guicontrol {
 			OnRender OriginalOnRender = (OnRender)0x4B6EE0;
+			bool is_demo_gui = false;
+			bool is_retcenter_hud = false;
 			void __fastcall OnRenderHook(void* this_obj, void* _, void* arg1, void* arg2, void* arg3) {
-				/*
+				
 				t2::abstraction::SimObject sim_obj(this_obj);
-				PLOG_DEBUG << sim_obj.namespace_name_;
+				//PLOG_DEBUG << sim_obj.namespace_name_;
 
+				if (std::string(sim_obj.namespace_name_) == "DemoPlaybackDlg") {
+					is_demo_gui = true;
+				}
+				else {
+					is_demo_gui = false;
+				}
+
+
+				/*
+				if (std::string(sim_obj.namespace_name_) == "retCenterHud") {
+					is_retcenter_hud = true;
+					//return;
+				}
+				else {
+					is_retcenter_hud = false;
+				}
+				*/
+				 //early exiting doesnt stop from children being drawn
+
+				/*
 				//*(BYTE*)(((unsigned int*)this_obj)[18] + 55) = true;
 				//*(BYTE*)(((unsigned int*)this_obj)[18] + 68) = true;
 				*/
@@ -427,10 +438,16 @@ namespace t2 {
 
 			OnRender OriginalOnRender2 = (OnRender)0x68A450;
 			void __fastcall OnRenderHook2(void* this_obj, void* _, void* arg1, void* arg2, void* arg3) {
-				/*
+				
 				t2::abstraction::SimObject sim_obj(this_obj);
-				PLOG_DEBUG << sim_obj.namespace_name_;
-
+				//PLOG_DEBUG << sim_obj.namespace_name_;
+				if (std::string(sim_obj.namespace_name_) == "DemoPlaybackDlg") {
+					is_demo_gui = true;
+				}
+				else {
+					is_demo_gui = false;
+				}
+				/*
 				//*(BYTE*)(((unsigned int*)this_obj)[18] + 55) = true;
 				//*(BYTE*)(((unsigned int*)this_obj)[18] + 68) = true;
 				*/
@@ -462,19 +479,49 @@ namespace t2 {
 					for (DWORD* i = (DWORD*)*((DWORD*)this_gui_object + 14); i != (DWORD*)(*((DWORD*)this_gui_object + 14) + 4 * *((DWORD*)this_gui_object + 12)); ++i) {
 						DWORD* some_obj = (DWORD*)*i;
 						t2::abstraction::SimObject some_sim_obj(some_obj);
-						if (std::string(some_sim_obj.namespace_name_) == "navHud") {
+						std::string some_sim_obj_name(some_sim_obj.namespace_name_);
+						//PLOG_DEBUG << some_sim_obj.namespace_name_;
+						if (some_sim_obj_name == "navHud" || is_demo_gui) {
 							*(BYTE*)((unsigned int)some_obj + 76) = true;
 						}
 						else {
 							*(BYTE*)((unsigned int)some_obj + 76) = false;
 						}
+
+						/*
+						if (some_sim_obj_name == "helpTextGui" || some_sim_obj_name == "damageHud" || some_sim_obj_name == "GuiTextCtrl" || some_sim_obj_name == "reticleHud") {
+							*(BYTE*)((unsigned int)some_obj + 76) = false;
+						}
+						*/
+
+						/*
+						if (is_retcenter_hud) {
+							*(BYTE*)((unsigned int)some_obj + 76) = true;
+						}
+						else {
+							*(BYTE*)((unsigned int)some_obj + 76) = false;
+						}*/
 					}
 				}
 				OriginalRenderChildControls(this_gui_object, arg1, arg2, arg3);
 				return;
 			}
 
-			
+			sub_505740 Originalsub_505740 = (sub_505740)0x505740;
+			char* __fastcall sub_505740Hook(void*, void*, void*, void*, void*) {
+				return NULL;
+			}
+
+			sub_506870 Originalsub_506870 = (sub_506870)0x506870;
+			char __fastcall sub_506870Hook(void*, void*, void*, void*, void*) {
+				return '\0';
+			}
+
+			extern sub_5046A0 Originalsub_5046A0 = (sub_5046A0)0x5046A0;
+			int(__fastcall sub_5046A0Hook)(void*, void*, void*, void*, void*, void*, void*) {
+				return 0;
+			}
+
 		}
 	}
 }

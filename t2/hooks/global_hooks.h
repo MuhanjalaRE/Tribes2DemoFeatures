@@ -63,6 +63,18 @@ namespace t2 {
 			typedef void(__thiscall* RenderChildControls)(void*, void*, void*, void*);
 			extern RenderChildControls OriginalRenderChildControls;
 			void __fastcall RenderChildControlsHook(void*, void*, void*, void*, void*);
+
+			typedef char* (__thiscall* sub_505740)(void*, void*, void*, void*);
+			extern sub_505740 Originalsub_505740;
+			char* __fastcall sub_505740Hook(void*, void*, void*, void*, void*);
+
+			typedef char(__thiscall* sub_506870)(void*, void*, void*, void*);
+			extern sub_506870 Originalsub_506870;
+			char __fastcall sub_506870Hook(void*, void*, void*, void*, void*);
+
+			typedef int(__thiscall* sub_5046A0)(void*, void*, void*, void*, void*, void*);
+			extern sub_5046A0 Originalsub_5046A0;
+			int(__fastcall sub_5046A0Hook)(void*, void*, void*, void*, void*, void*, void*);
 		}
 	}
 }

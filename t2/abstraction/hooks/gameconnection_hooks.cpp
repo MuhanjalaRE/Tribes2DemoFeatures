@@ -149,7 +149,16 @@ namespace t2 {
 						*((unsigned int*)0x007A1A40) = false; // Disable first person
 					}
 					*/
-					
+
+					/*
+					*((float*)0x762A3C) = 179;
+					*((float*)0x762C68) = 179;
+					*((float*)0x00763E08) = 179;
+					*((float*)0x0077CAD8) = 179;
+					*((float*)0x00795C08) = 179;
+
+					*((float*)0x762A40) = 1;
+					*/
 
 					OriginalGetControlCameraTransform(this_gameconnection, dt, matrix);
 					t2::math::Matrix* mat = (t2::math::Matrix*)matrix;

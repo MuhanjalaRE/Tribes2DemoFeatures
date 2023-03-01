@@ -8,7 +8,7 @@ namespace t2 {
 		float camera_move_speed_z = 0.12;
 		float camera_rotation_speed_pitch = 0.00075;
 		float camera_rotation_speed_yaw = 0.00075;
-		float camera_fov = 120;
+		int camera_fov = 120;
 		//bool set_camera = true;
 		bool show_player_model = true;
 		bool show_weapon_model = true;
@@ -30,7 +30,7 @@ namespace t2 {
 
 			third_person_zoom_rate = camera_json["third_person_zoom_rate"].get<float>();
 
-			camera_fov = camera_json["fov"].get<float>();
+			camera_fov = camera_json["fov"].get<int>();
 
 			show_player_model = camera_json["show_player_model"].get<bool>();
 			show_weapon_model = camera_json["show_weapon_model"].get<bool>();

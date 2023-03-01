@@ -20,6 +20,10 @@ namespace t2 {
             c = cos(angle);
         }
 
+        inline float mDegToRad(float d)
+        {
+            return float((d * M_PI) / float(180));
+        }
 
         class Vector {
         public:

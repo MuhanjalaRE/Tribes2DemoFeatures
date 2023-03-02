@@ -21,7 +21,7 @@ namespace t2 {
 			bool show_iffs = true;
 			bool first_person = true;
 			float third_person_distance = 10;
-
+			extern float speed_hack_scale = 1.0f;
 
 			float debug_third_person_offset_scalar = -0.194;
 

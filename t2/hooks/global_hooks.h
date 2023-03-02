@@ -76,5 +76,11 @@ namespace t2 {
 			extern sub_5046A0 Originalsub_5046A0;
 			int(__fastcall sub_5046A0Hook)(void*, void*, void*, void*, void*, void*, void*);
 		}
+
+		namespace wintimer {
+			typedef void(__stdcall* GetElapsedMS)(void);
+			extern GetElapsedMS OriginalGetElapsedMS;
+			void __stdcall GetElapsedMSHook(void);
+		}
 	}
 }

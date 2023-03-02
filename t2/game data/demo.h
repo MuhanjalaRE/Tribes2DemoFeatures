@@ -25,6 +25,7 @@ namespace t2 {
 			extern bool show_iffs;
 			extern bool first_person;
 			extern float third_person_distance;
+			extern float speed_hack_scale;
 
 			extern float debug_third_person_offset_scalar;
 		}

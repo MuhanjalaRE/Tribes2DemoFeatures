@@ -523,5 +523,85 @@ namespace t2 {
 			}
 
 		}
+
+		namespace wintimer {
+			GetElapsedMS OriginalGetElapsedMS = (GetElapsedMS)0x005618D0;
+
+			void __stdcall GetElapsedMSHook(void) {
+
+				OriginalGetElapsedMS();
+
+				static LARGE_INTEGER PerformanceCount;
+				static LARGE_INTEGER* stru_83C154 = ((LARGE_INTEGER*)0x0083C154);
+				static LARGE_INTEGER Frequency = { 0 };
+				if (Frequency.QuadPart == 0) {
+					QueryPerformanceFrequency((LARGE_INTEGER*)&Frequency);
+				}
+
+				short v4 = 3;
+				short v5 = 8;
+
+				QueryPerformanceCounter(&PerformanceCount);
+				double v0 = (PerformanceCount.QuadPart - stru_83C154->QuadPart);
+				if ((((PerformanceCount.QuadPart - stru_83C154->QuadPart) >> 32) & 0x80000000) != 0i64)
+					v0 = v0 + *((double*)0x78C56C);
+				double v1 = v0 * *((double*)0x78C570);
+				double v2 = Frequency.QuadPart;
+				if (Frequency.HighPart < 0)
+					v2 = v2 + *((double*)0x78C56C);
+				int v3 = (v1 / v2); //ms elapsed
+			
+				double v6 = v3;
+				if (v3 > (2.0f * t2::game_data::demo::speed_hack_scale))
+				{
+					*stru_83C154 = PerformanceCount;
+					//(*(*dword_9E8294 + 16))(dword_9E8294, &v4);
+					typedef int(__thiscall** some_func)(int, short*);
+					//some_func some_func_ = (some_func)(*(DWORD*)0x9E8294 + 16);
+					unsigned int* obj = (unsigned int*)0x9E8294;
+					//some_func_((void*)*obj, &v4);
+					(*(some_func)((*(DWORD*)(*(DWORD*)0x9E8294)) + 16))(*obj, &v4);
+				}
+				
+
+			}
+
+			void __stdcall GetElapsedMSHook2(void) {
+				//unsigned int elapsed_time = OriginalGetElapsedMS();
+				//return 1;
+
+
+				static LARGE_INTEGER mPerfCountNext;
+				static LARGE_INTEGER mPerfCountCurrent = { 0 };
+				static LARGE_INTEGER mFrequency;
+				QueryPerformanceFrequency((LARGE_INTEGER*)&mFrequency);
+
+				QueryPerformanceCounter((LARGE_INTEGER*)&mPerfCountNext);
+				double elapsed = (double)(1000.0f * double(mPerfCountNext.QuadPart - mPerfCountCurrent.QuadPart) / double(mFrequency.QuadPart));
+				double delta1 = double(mPerfCountNext.QuadPart - mPerfCountCurrent.QuadPart);
+				/*
+				e = 1000 * (current_quad - old_quad) / frequency_quad
+				e * frequency_quad = 1000 * (current_quad - old_quad)
+				current_quad - old_quad = (e*frequency_quad)/1000
+				current_quad = (e_ms * frequency_quad / 1000) + old_quad
+				*/
+
+				static LARGE_INTEGER speed_hack_value;
+				double delta = ((double)(elapsed * t2::game_data::demo::speed_hack_scale) * double(mFrequency.QuadPart) / 1000.0f);
+				speed_hack_value.QuadPart = delta + (mPerfCountCurrent.QuadPart);
+
+				mPerfCountCurrent = mPerfCountNext;
+
+				*((LARGE_INTEGER*)0x0083C154) = mPerfCountCurrent;
+				typedef int(__thiscall* some_func)(void*, void*);
+				some_func some_func_ = (some_func)0x403E30;
+
+				//double div = 
+
+				unsigned int* obj = (unsigned int*)0x9E8294;
+				int three = 3;
+				some_func_((void*)*obj, &three);
+			}
+		}
 	}
 }

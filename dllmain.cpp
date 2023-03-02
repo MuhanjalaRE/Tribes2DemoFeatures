@@ -1,6 +1,7 @@
 #define USE_IMGUI
 
 #include <Windows.h>
+#include <unordered_map>
 #include "detours/detours.h"
 #include <t2/hooks/global_hooks.h>
 #include <t2/abstraction/Player.h>
@@ -31,9 +32,48 @@ WNDPROC original_windowproc_callback = NULL;
 LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 typedef LRESULT(__stdcall* SetWindowLongPtr_)(HWND, int, long);
 SetWindowLongPtr_ OriginalSetWindowLongPtr = NULL;
+typedef BOOL(__stdcall* QueryPerformanceCounter_)(LARGE_INTEGER* lpPerformanceCount);
+QueryPerformanceCounter_ OriginalQueryPerformanceCounter = NULL;
+DWORD game_thread_id = NULL;
+LARGE_INTEGER initial_performance_counter = { 0 };
+LARGE_INTEGER current_performance_counter = { 0 };
+LARGE_INTEGER previous_performance_counter = { 0 };
 typedef BOOL(__stdcall* wglSwapBuffers)(int*);
 wglSwapBuffers OriginalwglSwapBuffers = NULL;
 bool show_imgui_demo_window = false;
+
+std::unordered_map<DWORD, LARGE_INTEGER> thread_counter_map;
+std::unordered_map<DWORD, LARGE_INTEGER> previous_thread_counter_map;
+
+BOOL __stdcall QueryPerformanceCounterHook(LARGE_INTEGER* lpPerformanceCount) {
+	//if (GetCurrentThreadId() == game_thread_id){
+
+	OriginalQueryPerformanceCounter(&current_performance_counter);
+	DWORD thread_id = GetCurrentThreadId();
+	if (thread_counter_map.find(thread_id) == thread_counter_map.end()) {
+		thread_counter_map[thread_id] = { 0 };
+		//OriginalQueryPerformanceCounter(&thread_counter_map[thread_id]);
+		thread_counter_map[thread_id] = current_performance_counter;
+		previous_thread_counter_map[thread_id] = thread_counter_map[thread_id];
+	}
+
+	//PLOG_DEBUG << "1\t" << double(current_performance_counter.QuadPart - previous_performance_counter.QuadPart);
+	//PLOG_DEBUG << "2\t" << (long long)(double(current_performance_counter.QuadPart - previous_performance_counter.QuadPart) * t2::game_data::demo::speed_hack_scale);
+	
+	thread_counter_map[thread_id].QuadPart += (long long)(double(current_performance_counter.QuadPart - previous_thread_counter_map[thread_id].QuadPart) * t2::game_data::demo::speed_hack_scale);
+	
+	//PLOG_DEBUG << "3\t" << initial_performance_counter.QuadPart - previous_performance_counter.QuadPart;
+	// << "4\t" << initial_performance_counter.QuadPart - current_performance_counter.QuadPart;
+	
+	previous_thread_counter_map[thread_id] = current_performance_counter;
+
+	*lpPerformanceCount = thread_counter_map[thread_id];
+	//}
+	//else {
+	//	OriginalQueryPerformanceCounter(lpPerformanceCount);
+	//}
+	return true;
+}
 
 BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 	//PLOG_DEBUG << "HDC = " << (unsigned int)arg1;
@@ -72,6 +112,7 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 		ImGui::SliderInt("Camera FOV", (int*)&t2::settings::camera_fov, 1, 179);
 		ImGui::Checkbox("Show player model", &t2::settings::show_player_model);
 		ImGui::Checkbox("Show weapon model", &t2::settings::show_weapon_model);
+		ImGui::SliderFloat("Speedhack", &t2::game_data::demo::speed_hack_scale, 0.1, 20);
 
 		ImGui::End();
 		
@@ -155,6 +196,15 @@ void OnDLLProcessAttach(void) {
 		t2::hooks::opengl::OriginalGluProject = (t2::hooks::opengl::GluProject)gluproject_address;
 	}
 
+	hModule = GetModuleHandle(L"Kernel32.dll");
+	if (hModule) {
+		unsigned int queryperformancecounter_address = (unsigned int)GetProcAddress(hModule, "QueryPerformanceCounter");
+		OriginalQueryPerformanceCounter = (QueryPerformanceCounter_)queryperformancecounter_address;
+		OriginalQueryPerformanceCounter(&initial_performance_counter);
+		previous_performance_counter = initial_performance_counter;
+		game_thread_id = GetCurrentThreadId();
+	}
+
 	DetourTransactionBegin();
 	DetourUpdateThread(GetCurrentThread());
 
@@ -194,6 +244,9 @@ void OnDLLProcessAttach(void) {
 	DetourAttach(&(PVOID&)t2::hooks::guicontrol::OriginalRenderChildControls, t2::hooks::guicontrol::RenderChildControlsHook);
 
 
+	//DetourAttach(&(PVOID&)t2::hooks::wintimer::OriginalGetElapsedMS, t2::hooks::wintimer::GetElapsedMSHook);
+
+
 	//(&(PVOID&)t2::hooks::guicontrol::Originalsub_505740, t2::hooks::guicontrol::sub_505740Hook); // called by sub_506870, this is what draws the IFFs
 	//DetourAttach(&(PVOID&)t2::hooks::guicontrol::Originalsub_5046A0, t2::hooks::guicontrol::sub_5046A0Hook); // called by sub_506870, this is required to draw both IFFS and player name and health bar
 	//DetourAttach(&(PVOID&)t2::hooks::guicontrol::Originalsub_506870, t2::hooks::guicontrol::sub_506870Hook); // this calls sub_506870, this draws the player name and health bar
@@ -213,6 +266,9 @@ void OnDLLProcessAttach(void) {
 
 	if (t2::hooks::opengl::OriginalGluProject)
 		DetourAttach(&(PVOID&)t2::hooks::opengl::OriginalGluProject, t2::hooks::opengl::GluProjectHook);
+
+	if (OriginalQueryPerformanceCounter)
+		DetourAttach(&(PVOID&)OriginalQueryPerformanceCounter, QueryPerformanceCounterHook);
 
 	DetourTransactionCommit();
 

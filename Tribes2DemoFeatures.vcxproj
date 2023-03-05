@@ -171,6 +171,7 @@
     <ClInclude Include="t2\abstraction\SceneObject.h" />
     <ClInclude Include="t2\abstraction\ShapeBase.h" />
     <ClInclude Include="t2\abstraction\SimObject.h" />
+    <ClInclude Include="t2\game data\aimtracker.h" />
     <ClInclude Include="t2\game data\demo.h" />
     <ClInclude Include="t2\game data\player.h" />
     <ClInclude Include="t2\hooks\global_hooks.h" />
@@ -202,6 +203,10 @@
     <ClCompile Include="t2\abstraction\SceneObject.cpp" />
     <ClCompile Include="t2\abstraction\ShapeBase.cpp" />
     <ClCompile Include="t2\abstraction\SimObject.cpp" />
+    <ClCompile Include="t2\game data\aimtracker.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="t2\game data\demo.cpp" />
     <ClCompile Include="t2\game data\player.cpp" />
     <ClCompile Include="t2\hooks\global_hooks.cpp" />

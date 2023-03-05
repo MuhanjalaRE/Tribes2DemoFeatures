@@ -75,6 +75,190 @@ BOOL __stdcall QueryPerformanceCounterHook(LARGE_INTEGER* lpPerformanceCount) {
 	return true;
 }
 
+//#define USE_AIMTRACKER
+
+#ifdef USE_AIMTRACKER
+#include <t2/game data/aimtracker.h>
+#include <imgui/imgui.h>
+#include <chrono>
+#include <vector>
+namespace t2 {
+	namespace game_data {
+		namespace aimtracker {
+
+
+
+			bool enabled = true;
+
+			struct AimTrackerSettings {
+				ImVec2 window_size = { 400, 400 };
+			} aimtracker_settings;
+
+			class AimTrackerTick {
+			private:
+				float f_pitch, f_yaw, f_roll;
+				std::chrono::steady_clock::time_point t_tick_time;
+
+			public:
+				AimTrackerTick(float pitch, float yaw, float roll) {
+					this->f_pitch = pitch;
+					this->f_yaw = FixYaw(yaw);
+					this->f_roll = roll;
+					this->t_tick_time = std::chrono::steady_clock::now();
+				}
+
+				static float FixYaw(float yaw) { return yaw; }
+
+				// Getters
+				float GetPitch(void) { return f_pitch; }
+
+				float GetYaw(void) { return f_yaw; }
+
+				float GetRoll(void) { return f_roll; }
+
+				std::chrono::steady_clock::time_point GetTickTime(void) { return t_tick_time; }
+
+				// Setters
+				void SetPitch(float pitch) { this->f_pitch = pitch; }
+
+				void SetYaw(float yaw) { this->f_yaw = yaw; }
+
+				void SetRoll(float roll) { this->f_roll = roll; }
+
+				void SetTickTime(std::chrono::steady_clock::time_point time) { this->t_tick_time = time; }
+			};
+
+			static double GetTimeDifference(const std::chrono::steady_clock::time_point& end_time, const std::chrono::steady_clock::time_point& start_time) {
+				return std::chrono::duration<double>(end_time - start_time).count();
+			}
+
+			class AimTrackerTickManager {
+			private:
+				std::vector<AimTrackerTick> v_aim_ticks;
+				int i_aim_tick_index;
+				int i_aim_tick_max_count;
+				int i_aim_tick_count;
+				float f_lifetime;
+				float f_zoom_yaw;
+				float f_zoom_pitch;
+				int i_ticks_per_second;
+				float f_delay_per_tick;
+				std::chrono::steady_clock::time_point t_last_tick_time;
+
+			public:
+				// static float f_lifetime;
+
+				AimTrackerTickManager(void) {
+					SetMaxCount(150 * 3);
+					SetLifeTime(3.0);
+					SetZoomPitch(2.0);
+					SetZoomYaw(2.0);
+					SetTicksPerSecond(150);
+					t_last_tick_time = std::chrono::steady_clock::now();
+				}
+
+				void AddTick(AimTrackerTick tick) {
+					/*
+					AimTrackerTick* existing_tick = v_aim_ticks[i_aim_tick_index];
+					if (existing_tick){
+							delete existing_tick;
+					}
+					*/
+
+					// v_aim_ticks[i_aim_tick_index] = tick;
+
+					if (i_aim_tick_count < i_aim_tick_max_count) {
+						v_aim_ticks.push_back(AimTrackerTick(0, 0, 0));
+					}
+
+					AimTrackerTick& existing_tick = v_aim_ticks[i_aim_tick_index];
+					existing_tick.SetPitch(tick.GetPitch());
+					existing_tick.SetYaw(tick.GetYaw());
+					existing_tick.SetRoll(tick.GetRoll());
+					existing_tick.SetTickTime(std::chrono::steady_clock::now());
+
+					existing_tick = AimTrackerTick(tick.GetPitch(), tick.GetYaw(), tick.GetRoll());
+
+					i_aim_tick_index++;
+					i_aim_tick_index = i_aim_tick_index % i_aim_tick_max_count;
+
+					i_aim_tick_count++;
+					if (i_aim_tick_count >= i_aim_tick_max_count) {
+						i_aim_tick_count = i_aim_tick_max_count;
+					}
+
+					t_last_tick_time = std::chrono::steady_clock::now();
+				}
+
+				// Setters
+
+				void SetTicksPerSecond(int ticks_per_second) {
+					this->i_ticks_per_second = ticks_per_second;
+					this->f_delay_per_tick = 1.0 / ticks_per_second;
+				}
+
+				void SetMaxCount(int max_count) {
+					i_aim_tick_index = 0;
+					i_aim_tick_max_count = max_count;
+					v_aim_ticks.clear();
+					v_aim_ticks.reserve(i_aim_tick_max_count);
+					/*
+					for (int i=0;i<i_aim_tick_max_count;i++){
+							v_aim_ticks[i] = NULL;
+					}
+					*/
+					// v_aim_ticks.push_back(AimTrackerTick(0, 0, 0));
+					i_aim_tick_count = 0;
+				}
+
+				void SetLifeTime(float lifetime) { this->f_lifetime = lifetime; }
+
+				void SetZoomYaw(float zoom) { this->f_zoom_yaw = zoom; }
+
+				void SetZoomPitch(float zoom) { this->f_zoom_pitch = zoom; }
+
+				// Getters
+				std::chrono::steady_clock::time_point GetLastTickTime(void) { return t_last_tick_time; }
+
+				int GetTicksPerSecond(void) { return i_ticks_per_second; }
+
+				float GetDelayPerTick(void) { return f_delay_per_tick; }
+
+				float GetZoomPitch(void) { return f_zoom_pitch; }
+
+				float GetZoomYaw(void) { return f_zoom_yaw; }
+
+				float GetLifeTime(void) { return f_lifetime; }
+
+				int GetCurrentIndex(void) { return i_aim_tick_index; }
+
+				int GetCount(void) { return i_aim_tick_count; }
+
+				int GetMaxCount(void) { return i_aim_tick_max_count; }
+
+				std::vector<AimTrackerTick>& GetTicks(void) { return v_aim_ticks; }
+
+				AimTrackerTick& GetTick(int index) {
+					int i_index = i_aim_tick_index - 1 - index;
+					if (i_index >= 0) {
+						return v_aim_ticks[i_index];
+					}
+					else {
+						return v_aim_ticks[i_aim_tick_max_count + i_index];
+					}
+
+					// return v_aim_ticks[(i_aim_tick_index + index)%i_aim_tick_max_count];
+				}
+			} o_AimTrackerTickManager, o_AimTrackerPredictionTickManager;
+		}  // namespace aimtracker
+
+		using namespace aimtracker;
+	}
+}
+#endif
+
+
+
 BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 	//PLOG_DEBUG << "HDC = " << (unsigned int)arg1;
 
@@ -112,12 +296,127 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 		ImGui::SliderInt("Camera FOV", (int*)&t2::settings::camera_fov, 1, 179);
 		ImGui::Checkbox("Show player model", &t2::settings::show_player_model);
 		ImGui::Checkbox("Show weapon model", &t2::settings::show_weapon_model);
-		ImGui::SliderFloat("Speedhack", &t2::game_data::demo::speed_hack_scale, 0.1, 20);
+		ImGui::SliderFloat("Speed scale", &t2::game_data::demo::speed_hack_scale, 0.1, 10, "%.3f", ImGuiSliderFlags_::ImGuiSliderFlags_Logarithmic);
+
+#ifdef USE_AIMTRACKER
+		ImGui::BeginGroup();
+
+		ImGui::Checkbox("Enabled", &t2::game_data::aimtracker::enabled);
+
+		static float f_lifetime = t2::game_data::aimtracker::o_AimTrackerTickManager.GetLifeTime();
+		static int i_maxcount = t2::game_data::aimtracker::o_AimTrackerTickManager.GetMaxCount();
+		static int i_ticks_per_second = t2::game_data::aimtracker::o_AimTrackerTickManager.GetTicksPerSecond();
+
+		static float f_zoom_pitch = t2::game_data::aimtracker::o_AimTrackerTickManager.GetZoomPitch();
+		static float f_zoom_yaw = t2::game_data::aimtracker::o_AimTrackerTickManager.GetZoomYaw();
+
+		static float f_tool_window_size = t2::game_data::aimtracker::aimtracker_settings.window_size.x;
+
+		ImGui::PushItemWidth(100);
+
+		if (ImGui::SliderInt("Max items", &i_maxcount, 1, 10000)) {
+			t2::game_data::aimtracker::o_AimTrackerTickManager.SetMaxCount(i_maxcount);
+			t2::game_data::aimtracker::o_AimTrackerPredictionTickManager.SetMaxCount(i_maxcount);
+		}
+
+		if (ImGui::SliderFloat("Lifetime", &f_lifetime, 0, 60)) {
+			t2::game_data::aimtracker::o_AimTrackerTickManager.SetLifeTime(f_lifetime);
+			t2::game_data::aimtracker::o_AimTrackerPredictionTickManager.SetLifeTime(f_lifetime);
+		}
+
+		if (ImGui::SliderInt("Ticks per second", &i_ticks_per_second, 1, 300)) {
+			t2::game_data::aimtracker::o_AimTrackerTickManager.SetTicksPerSecond(i_ticks_per_second);
+			t2::game_data::aimtracker::o_AimTrackerPredictionTickManager.SetTicksPerSecond(i_ticks_per_second);
+		}
+
+		if (ImGui::SliderFloat("Pitch zoom", &f_zoom_pitch, 1, 500)) {
+			t2::game_data::aimtracker::o_AimTrackerTickManager.SetZoomPitch(f_zoom_pitch);
+			t2::game_data::aimtracker::o_AimTrackerPredictionTickManager.SetZoomPitch(f_zoom_pitch);
+		}
+
+		if (ImGui::SliderFloat("Yaw zoom", &f_zoom_yaw, 1, 500)) {
+			t2::game_data::aimtracker::o_AimTrackerTickManager.SetZoomYaw(f_zoom_yaw);
+			t2::game_data::aimtracker::o_AimTrackerPredictionTickManager.SetZoomYaw(f_zoom_yaw);
+		}
+
+		if (ImGui::SliderFloat("Window size", &f_tool_window_size, 200, 1200)) {
+			t2::game_data::aimtracker::aimtracker_settings.window_size = { f_tool_window_size, f_tool_window_size };
+		}
+
+		ImGui::PopItemWidth();
+
+		ImGui::EndGroup();
+#endif		
+		ImGui::End();
+	}
+
+
+#ifdef USE_AIMTRACKER
+	if (t2::game_data::aimtracker::enabled && t2::game_data::aimtracker::GetTimeDifference(std::chrono::steady_clock::now(), t2::game_data::aimtracker::o_AimTrackerTickManager.GetLastTickTime()) > t2::game_data::aimtracker::o_AimTrackerTickManager.GetDelayPerTick()) {
+		if (t2::game_data::demo::is_player_alive) {
+			t2::math::Vector rot_ = GET_OBJECT_VARIABLE_BY_OFFSET(t2::math::Vector, t2::game_data::demo::player, 2380);
+			t2::math::Vector head_ = GET_OBJECT_VARIABLE_BY_OFFSET(t2::math::Vector, t2::game_data::demo::player, 2368);
+
+			// Math::printRotator(r, "Rotation");
+			// (r.Pitch > 270) {  // Looking down
+			//	r.Pitch = -(360 - r.Pitch);
+			//}
+
+
+
+			while (rot_.z_ > M_2PI)
+				rot_.z_ -= M_2PI;
+			while (rot_.z_ < -M_2PI)
+				rot_.z_ += M_2PI;
+			t2::game_data::aimtracker::o_AimTrackerTickManager.AddTick(t2::game_data::aimtracker::AimTrackerTick(head_.x_, rot_.z_, 0));
+		}
+	}
+
+	if (t2::game_data::aimtracker::enabled) {
+		ImGui::SetNextWindowSize(t2::game_data::aimtracker::aimtracker_settings.window_size);
+
+		//::PushStyleColor(ImGuiCol_WindowBg, visuals::radar_visual_settings.window_background_colour.Value);
+
+		ImGui::Begin("aimtracker", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+
+		ImVec2 window_position = ImGui::GetWindowPos();
+		ImVec2 window_size = ImGui::GetWindowSize();
+
+		ImVec2 center(window_position.x + window_size.x / 2, window_position.y + window_size.y / 2);
+
+		ImDrawList* pDrawList = ImGui::GetWindowDrawList();
+
+		pDrawList->AddLine({ window_position.x, window_position.y + window_size.y / 2 }, { window_position.x + window_size.x, window_position.y + window_size.y / 2 }, ImColor(65, 65, 65, 255), 2);
+		pDrawList->AddLine({ window_position.x + window_size.x / 2, window_position.y }, { window_position.x + window_size.x / 2, window_position.y + window_size.y }, ImColor(65, 65, 65, 255), 2);
+		pDrawList->AddCircleFilled(center, 3, ImColor(65, 65, 65, 125));
+
+		for (int i = 0; i < t2::game_data::aimtracker::o_AimTrackerPredictionTickManager.GetCount(); i++) {
+			t2::game_data::aimtracker::AimTrackerTick& tick = t2::game_data::aimtracker::o_AimTrackerPredictionTickManager.GetTick(i);
+			double d = t2::game_data::aimtracker::GetTimeDifference(std::chrono::steady_clock::now(), tick.GetTickTime());
+
+			if (d > t2::game_data::aimtracker::o_AimTrackerPredictionTickManager.GetLifeTime())
+				break;
+
+			pDrawList->AddCircleFilled({ center.x + tick.GetYaw() * t2::game_data::aimtracker:: o_AimTrackerPredictionTickManager.GetZoomYaw(), center.y - tick.GetPitch() * t2::game_data::aimtracker::o_AimTrackerPredictionTickManager.GetZoomPitch() }, (1 - d / t2::game_data::aimtracker::o_AimTrackerPredictionTickManager.GetLifeTime()) * 3, ImColor(d / t2::game_data::aimtracker::o_AimTrackerTickManager.GetLifeTime() * 0, 255, d / t2::game_data::aimtracker::o_AimTrackerPredictionTickManager.GetLifeTime() * 0, (1 - d / t2::game_data::aimtracker::o_AimTrackerPredictionTickManager.GetLifeTime()) * 255));
+			// pDrawList->AddText({center.x + tick.GetYaw() * o_AimTrackerPredictionTickManager.GetZoomYaw(), center.y - tick.GetPitch() * o_AimTrackerPredictionTickManager.GetZoomPitch()}, ImCol(255,255,255,255), to_string()
+		}
+
+		for (int i = 0; i < t2::game_data::aimtracker::o_AimTrackerTickManager.GetCount(); i++) {
+			t2::game_data::aimtracker::AimTrackerTick& tick = t2::game_data::aimtracker::o_AimTrackerTickManager.GetTick(i);
+			double d = t2::game_data::aimtracker::GetTimeDifference(std::chrono::steady_clock::now(), tick.GetTickTime());
+
+			if (d > t2::game_data::aimtracker::o_AimTrackerTickManager.GetLifeTime())
+				break;
+
+			pDrawList->AddCircleFilled({ center.x + tick.GetYaw() * t2::game_data::aimtracker::o_AimTrackerTickManager.GetZoomYaw(), center.y - tick.GetPitch() * t2::game_data::aimtracker::o_AimTrackerTickManager.GetZoomPitch() }, (1 - d / t2::game_data::aimtracker::o_AimTrackerTickManager.GetLifeTime()) * 3, ImColor(255, d / t2::game_data::aimtracker::o_AimTrackerTickManager.GetLifeTime() * 255, d / t2::game_data::aimtracker::o_AimTrackerTickManager.GetLifeTime() * 255, (1 - d / t2::game_data::aimtracker::o_AimTrackerTickManager.GetLifeTime()) * 255));
+		}
 
 		ImGui::End();
-		
+
+		//ImGui::PopStyleColor();
 	}
 	
+#endif
 
 	t2::hooks::opengl::projection_buffer.clear();
 
@@ -309,8 +608,13 @@ LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPAR
 
 	if (msg == WM_KEYDOWN) {
 		if (wParam == VK_INSERT) {
-			t2::settings::LoadSettings();
+			//t2::settings::LoadSettings();
 			show_imgui_demo_window = !show_imgui_demo_window;
+
+			// "when having a directional key pressed while pressing "insert", it keeps going in that direction"
+			for (std::unordered_map<unsigned int, bool>::iterator i = keys::key_states.begin(); i != keys::key_states.end(); i++) {
+				i->second = false;
+			}
 		}
 		if (wParam == 0x43){
 			//t2::settings::set_camera = !t2::settings::set_camera;
@@ -324,6 +628,10 @@ LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPAR
 		}
 		if (wParam == 0x54) {
 			t2::game_data::demo::first_person = !t2::game_data::demo::first_person;
+		}
+
+		if (wParam == 0x52) {
+			t2::game_data::demo::speed_hack_scale = 1;
 		}
 	}
 	

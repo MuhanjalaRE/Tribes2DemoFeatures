@@ -83,6 +83,9 @@
     <ClCompile Include="imgui\imgui_demo.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
+    <ClCompile Include="t2\game data\aimtracker.cpp">
+      <Filter>t2\game data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="detours\detours.h">
@@ -165,6 +168,9 @@
     </ClInclude>
     <ClInclude Include="imgui\imstb_truetype.h">
       <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="t2\game data\aimtracker.h">
+      <Filter>t2\game data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -26,8 +26,11 @@ namespace t2 {
 			extern bool first_person;
 			extern float third_person_distance;
 			extern float speed_hack_scale;
-
 			extern float debug_third_person_offset_scalar;
+			extern float fps;
+			extern float zoom_fov_delta_per_second;
+			extern float max_fov;
+			extern float min_fov;
 		}
 	}
 }

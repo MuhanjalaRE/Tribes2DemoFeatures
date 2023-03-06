@@ -8,7 +8,7 @@ namespace t2 {
 		float camera_move_speed_z = 0.12;
 		float camera_rotation_speed_pitch = 0.00075;
 		float camera_rotation_speed_yaw = 0.00075;
-		int camera_fov = 120;
+		float camera_fov = 120;
 		//bool set_camera = true;
 		bool show_player_model = true;
 		bool show_weapon_model = true;

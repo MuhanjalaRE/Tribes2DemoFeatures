@@ -21,9 +21,12 @@ namespace t2 {
 			bool show_iffs = true;
 			bool first_person = true;
 			float third_person_distance = 10;
-			extern float speed_hack_scale = 1.0f;
-
+			float speed_hack_scale = 1.0f;
 			float debug_third_person_offset_scalar = -0.194;
+			float fps = *(float*)0x0083F380;
+			float zoom_fov_delta_per_second = 120;
+			float max_fov = 179;
+			float min_fov = 1;
 
 			void ToggleViewTarget(void){
 				if (!game_connection)

@@ -293,9 +293,40 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 		ImGui::Begin("Settings", NULL, ImGuiWindowFlags_AlwaysAutoResize);
 		//ImGui::SliderFloat("Camera yaw offset", &t2::game_data::demo::camera_yaw_offset, -2 * PI, 2 * PI);
 		//ImGui::SliderFloat("debug_third_person_scalar", &t2::game_data::demo::debug_third_person_offset_scalar, -100, 100);
-		ImGui::SliderInt("Camera FOV", (int*)&t2::settings::camera_fov, 1, 179);
+		if (ImGui::SliderFloat("Camera FOV", &t2::settings::camera_fov, 1, 179)) {
+			if (t2::settings::camera_fov > t2::game_data::demo::max_fov) {
+				t2::settings::camera_fov = t2::game_data::demo::max_fov;
+			} else if (t2::settings::camera_fov < t2::game_data::demo::min_fov) {
+				t2::settings::camera_fov = t2::game_data::demo::min_fov;
+			}
+		}
+		
+
+		if (ImGui::SliderFloat("Min FOV", &t2::game_data::demo::min_fov, 1, 179)) {
+			if (t2::settings::camera_fov < t2::game_data::demo::min_fov) {
+				t2::settings::camera_fov = t2::game_data::demo::min_fov;
+			}
+			if (t2::game_data::demo::min_fov > t2::game_data::demo::max_fov) {
+				t2::game_data::demo::min_fov = t2::game_data::demo::max_fov;
+			}
+		}
+
+
+		if (ImGui::SliderFloat("Max FOV", &t2::game_data::demo::max_fov, 1, 179)) {
+			if (t2::settings::camera_fov > t2::game_data::demo::max_fov) {
+				t2::settings::camera_fov = t2::game_data::demo::max_fov;
+			}
+			if (t2::game_data::demo::max_fov < t2::game_data::demo::min_fov) {
+				t2::game_data::demo::max_fov = t2::game_data::demo::min_fov;
+			}
+		}
+
+		ImGui::SliderFloat("FOV zoom change per second", &t2::game_data::demo::zoom_fov_delta_per_second, 1, 179);
+
+		ImGui::Separator();
 		ImGui::Checkbox("Show player model", &t2::settings::show_player_model);
 		ImGui::Checkbox("Show weapon model", &t2::settings::show_weapon_model);
+		ImGui::Separator();
 		ImGui::SliderFloat("Speed scale", &t2::game_data::demo::speed_hack_scale, 0.1, 10, "%.3f", ImGuiSliderFlags_::ImGuiSliderFlags_Logarithmic);
 
 #ifdef USE_AIMTRACKER

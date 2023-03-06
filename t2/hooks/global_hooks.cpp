@@ -32,8 +32,28 @@ namespace t2 {
 		namespace fps {
 			FpsUpdate OriginalFpsUpdate = (FpsUpdate)0x00564570;
 			void FpsUpdateHook(void) {
+				OriginalFpsUpdate();
+
 				*((unsigned int*)0x0079B3E4) = t2::settings::show_player_model;
 				*((unsigned int*)0x0079B3E8) = t2::settings::show_weapon_model;
+
+				//t2::game_data::demo::fps = 1.0f/(*(float*)0x0083F380);
+				//PLOG_DEBUG << "FPS\t:\t" << t2::game_data::demo::fps;
+
+				static LARGE_INTEGER performance_count;
+				static LARGE_INTEGER previous_performance_count = { 0 };
+				static LARGE_INTEGER frequency = { 0 };
+				if (frequency.QuadPart == 0) {
+					QueryPerformanceFrequency((LARGE_INTEGER*)&frequency);
+				}
+
+				QueryPerformanceCounter(&performance_count);
+				double delta_time = (((double)(performance_count.QuadPart - previous_performance_count.QuadPart)) / frequency.QuadPart) * 1000.0f;
+
+				previous_performance_count = performance_count;
+				
+				t2::game_data::demo::fps = 1000.0f / delta_time;
+				//PLOG_DEBUG << "FPS\t:\t" << t2::game_data::demo::fps;
 
 				/*
 				*((float*)0x762A3C) = 179;
@@ -45,6 +65,19 @@ namespace t2 {
 				*((float*)0x762A40) = 1;
 				*/
 
+				if (keys::key_states[0x5A]) { //z key - zoom out
+					t2::settings::camera_fov += (t2::game_data::demo::zoom_fov_delta_per_second / t2::game_data::demo::fps) / t2::game_data::demo::speed_hack_scale;
+					if (t2::settings::camera_fov > t2::game_data::demo::max_fov) {
+						t2::settings::camera_fov = t2::game_data::demo::max_fov;
+					}
+				}
+				if (keys::key_states[0x58]) { //x key - zoom in
+					t2::settings::camera_fov -= (t2::game_data::demo::zoom_fov_delta_per_second / t2::game_data::demo::fps) / t2::game_data::demo::speed_hack_scale;
+					if (t2::settings::camera_fov < t2::game_data::demo::min_fov) {
+						t2::settings::camera_fov = t2::game_data::demo::min_fov;
+					}
+				}
+
 				//*((unsigned int*)0x008423D4) = true; / Hide HUD HACK
 				
 				//t2::hooks::con::OriginalExecutef(2, "HideHudHACK", true);
@@ -54,7 +87,7 @@ namespace t2 {
 					//*((int*)GET_OBJECT_POINTER_TO_VARIABLE_BY_OFFSET(t2::game_data::demo::game_connection, 33372)) = NULL;
 				}
 				//t2::hooks::game::OriginalSetCameraFOV(t2::settings::camera_fov);
-				OriginalFpsUpdate();
+				
 				/*
 				if (t2::game_data::demo::game_connection){
 					t2::abstraction::GameConnection game_connection(t2::game_data::demo::game_connection);

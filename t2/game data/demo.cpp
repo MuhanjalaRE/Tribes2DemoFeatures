@@ -39,6 +39,8 @@ namespace t2 {
 			CameraAxisMovement camera_axis_movement_y;
 			CameraAxisMovement camera_axis_movement_z;
 
+			//QueryPerformanceCounter_ OriginalQueryPerformanceCounter = NULL;
+
 			void ToggleViewTarget(void){
 				if (!game_connection)
 					return;

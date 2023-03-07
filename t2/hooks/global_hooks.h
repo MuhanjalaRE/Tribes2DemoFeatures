@@ -8,6 +8,10 @@
 
 namespace t2 {
 	namespace hooks {
+
+		typedef BOOL(__stdcall* QueryPerformanceCounter_)(LARGE_INTEGER* lpPerformanceCount);
+		extern QueryPerformanceCounter_ OriginalQueryPerformanceCounter;
+
 		namespace con {
 			int __stdcall PrintfHook(char* format, ...);
 			typedef int(__stdcall* Printf)(char* format, ...);

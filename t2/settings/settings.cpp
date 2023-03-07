@@ -1,6 +1,7 @@
 #include "settings.h"
 #include <json/json.hpp>
 #include <fstream>
+#include <t2/game data/demo.h>
 
 namespace t2 {
 	namespace settings {
@@ -35,8 +36,13 @@ namespace t2 {
 			show_player_model = camera_json["show_player_model"].get<bool>();
 			show_weapon_model = camera_json["show_weapon_model"].get<bool>();
 
+			t2::game_data::demo::camera_axis_movement_x.acceleration_per_second = 0.2;
+			t2::game_data::demo::camera_axis_movement_x.deceleration_per_second = 0.4;
+			//t2::game_data::demo::camera_axis_movement_x.maximum_velocity = 1;
 
-
+			t2::game_data::demo::camera_axis_movement_y.acceleration_per_second = 0.2;
+			t2::game_data::demo::camera_axis_movement_y.deceleration_per_second = 0.4;
+			//t2::game_data::demo::camera_axis_movement_y.maximum_velocity = 1;
 		}
 	}
 }

@@ -40,6 +40,9 @@ namespace t2 {
 			//extern float camera_movement_acceleration;
 			//extern float maximum_camera_velocity;
 
+			//typedef BOOL(__stdcall* QueryPerformanceCounter_)(LARGE_INTEGER* lpPerformanceCount);
+			//extern QueryPerformanceCounter_ OriginalQueryPerformanceCounter;
+
 			struct CameraAxisMovement{
 				enum class State {kStopped, kAccelerating, kDecelerating};
 				enum class Direction {kNone, kPositive, kNegative};

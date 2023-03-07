@@ -34,8 +34,8 @@ WNDPROC original_windowproc_callback = NULL;
 LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 typedef LRESULT(__stdcall* SetWindowLongPtr_)(HWND, int, long);
 SetWindowLongPtr_ OriginalSetWindowLongPtr = NULL;
-typedef BOOL(__stdcall* QueryPerformanceCounter_)(LARGE_INTEGER* lpPerformanceCount);
-QueryPerformanceCounter_ OriginalQueryPerformanceCounter = NULL;
+//typedef BOOL(__stdcall* QueryPerformanceCounter_)(LARGE_INTEGER* lpPerformanceCount);
+//QueryPerformanceCounter_ OriginalQueryPerformanceCounter = NULL;
 DWORD game_thread_id = NULL;
 LARGE_INTEGER initial_performance_counter = {0};
 LARGE_INTEGER current_performance_counter = {0};
@@ -50,7 +50,7 @@ std::unordered_map<DWORD, LARGE_INTEGER> previous_thread_counter_map;
 BOOL __stdcall QueryPerformanceCounterHook(LARGE_INTEGER* lpPerformanceCount) {
     // if (GetCurrentThreadId() == game_thread_id){
 
-    OriginalQueryPerformanceCounter(&current_performance_counter);
+    t2::hooks::OriginalQueryPerformanceCounter(&current_performance_counter);
     DWORD thread_id = GetCurrentThreadId();
     if (thread_counter_map.find(thread_id) == thread_counter_map.end()) {
         thread_counter_map[thread_id] = {0};
@@ -320,15 +320,15 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 
         ImGui::Separator();
 
-        ImGui::SliderFloat("Camera movement acceleration per second (Forward/Backward)", &t2::game_data::demo::camera_axis_movement_y.acceleration_per_second, 1E-4, 1E2);
-        ImGui::SliderFloat("Camera movement maximum velocity (Forward/Backward)", &t2::game_data::demo::camera_axis_movement_y.maximum_velocity, 1E-2, 1E2);
-        ImGui::SliderFloat("Camera movement deceleration per second (Forward/Backward)", &t2::game_data::demo::camera_axis_movement_y.deceleration_per_second, 1E-4, 1E2);
+        ImGui::SliderFloat("Camera movement acceleration per second (Forward/Backward)", &t2::game_data::demo::camera_axis_movement_y.acceleration_per_second, 1E-2, 1);
+        ImGui::SliderFloat("Camera movement deceleration per second (Forward/Backward)", &t2::game_data::demo::camera_axis_movement_y.deceleration_per_second, 1E-2, 1);
+        ImGui::SliderFloat("Camera movement maximum velocity (Forward/Backward)", &t2::game_data::demo::camera_axis_movement_y.maximum_velocity, 1E-2, 1E0);
 
         ImGui::Separator();
 
-        ImGui::SliderFloat("Camera movement acceleration per second (Left/Right)", &t2::game_data::demo::camera_axis_movement_x.acceleration_per_second, 1E-4, 1E2);
-        ImGui::SliderFloat("Camera movement deceleration per second (Left/Right)", &t2::game_data::demo::camera_axis_movement_x.deceleration_per_second, 1E-4, 1E2);
-        ImGui::SliderFloat("Camera movement maximum velocity (Left/Right)", &t2::game_data::demo::camera_axis_movement_x.maximum_velocity, 1E-2, 1E2);
+        ImGui::SliderFloat("Camera movement acceleration per second (Left/Right)", &t2::game_data::demo::camera_axis_movement_x.acceleration_per_second, 1E-2, 1);
+        ImGui::SliderFloat("Camera movement deceleration per second (Left/Right)", &t2::game_data::demo::camera_axis_movement_x.deceleration_per_second, 1E-2, 1);
+        ImGui::SliderFloat("Camera movement maximum velocity (Left/Right)", &t2::game_data::demo::camera_axis_movement_x.maximum_velocity, 1E-2, 1E0);
 
         ImGui::Separator();
         ImGui::Checkbox("Show player model", &t2::settings::show_player_model);
@@ -527,9 +527,10 @@ void OnDLLProcessAttach(void) {
     hModule = GetModuleHandle(L"Kernel32.dll");
     if (hModule) {
         unsigned int queryperformancecounter_address = (unsigned int)GetProcAddress(hModule, "QueryPerformanceCounter");
-        OriginalQueryPerformanceCounter = (QueryPerformanceCounter_)queryperformancecounter_address;
-        OriginalQueryPerformanceCounter(&initial_performance_counter);
+        t2::hooks::OriginalQueryPerformanceCounter = (t2::hooks::QueryPerformanceCounter_)queryperformancecounter_address;
+        t2::hooks::OriginalQueryPerformanceCounter(&initial_performance_counter);
         previous_performance_counter = initial_performance_counter;
+        //t2::game_data::demo::OriginalQueryPerformanceCounter = (t2::game_data::demo::QueryPerformanceCounter_)queryperformancecounter_address;
         game_thread_id = GetCurrentThreadId();
     }
 
@@ -591,8 +592,10 @@ void OnDLLProcessAttach(void) {
     if (t2::hooks::opengl::OriginalGluProject)
         DetourAttach(&(PVOID&)t2::hooks::opengl::OriginalGluProject, t2::hooks::opengl::GluProjectHook);
 
-    if (OriginalQueryPerformanceCounter)
-        DetourAttach(&(PVOID&)OriginalQueryPerformanceCounter, QueryPerformanceCounterHook);
+    if (t2::hooks::OriginalQueryPerformanceCounter){
+        DetourAttach(&(PVOID&)t2::hooks::OriginalQueryPerformanceCounter, QueryPerformanceCounterHook);
+        //t2::game_data::demo::OriginalQueryPerformanceCounter = (t2::game_data::demo::QueryPerformanceCounter_)OriginalQueryPerformanceCounter;
+    }
 
     DetourTransactionCommit();
 
@@ -667,12 +670,14 @@ LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPAR
             if (wParam == 0x41 || wParam == 0x44) {
                 // if the camera is stopped
                 if (t2::game_data::demo::camera_axis_movement_x.state == t2::game_data::demo::CameraAxisMovement::State::kStopped) {
+                    PLOG_DEBUG << "Accelerating on X axis";
                     if (wParam == 0x41) {  // if we 're moving left, we're going negative along the x axis
                         t2::game_data::demo::camera_axis_movement_x.direction = t2::game_data::demo::CameraAxisMovement::Direction::kNegative;
                     } else if (wParam == 0x44) {  // if we're moving right, we're going positive along the x axis
                         t2::game_data::demo::camera_axis_movement_x.direction = t2::game_data::demo::CameraAxisMovement::Direction::kPositive;
                     }
-                    QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_x.acceleration_timestamp);
+                    //QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_x.acceleration_timestamp);
+                    t2::hooks::OriginalQueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_x.acceleration_timestamp);
                     t2::game_data::demo::camera_axis_movement_x.state = t2::game_data::demo::CameraAxisMovement::State::kAccelerating;
                     t2::game_data::demo::camera_axis_movement_x.current_velocity = 0;
                 } /* else if (t2::game_data::demo::camera_axis_movement_x.state != t2::game_data::demo::CameraAxisMovement::State::kStopped) {
@@ -694,7 +699,8 @@ LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPAR
                     } else if (wParam == 0x53) {  // if we're moving backwards, we're going negative along the y axis
                         t2::game_data::demo::camera_axis_movement_y.direction = t2::game_data::demo::CameraAxisMovement::Direction::kNegative;
                     }
-                    QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_y.acceleration_timestamp);
+                    //QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_y.acceleration_timestamp);
+                    t2::hooks::OriginalQueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_y.acceleration_timestamp);
                     t2::game_data::demo::camera_axis_movement_y.state = t2::game_data::demo::CameraAxisMovement::State::kAccelerating;
                     t2::game_data::demo::camera_axis_movement_y.current_velocity = 0;
                 } /* else if (t2::game_data::demo::camera_axis_movement_y.state != t2::game_data::demo::CameraAxisMovement::State::kStopped) {
@@ -717,8 +723,10 @@ LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPAR
                     
                     // We are moving in a certain direction and the key associated to mvoving in that direction has been released
                     if ((t2::game_data::demo::camera_axis_movement_x.direction == t2::game_data::demo::CameraAxisMovement::Direction::kNegative && wParam == 0x41) || (t2::game_data::demo::camera_axis_movement_x.direction == t2::game_data::demo::CameraAxisMovement::Direction::kPositive && wParam == 0x44)) {
+                        PLOG_DEBUG << "Decelerating on X axis";
                         t2::game_data::demo::camera_axis_movement_x.state = t2::game_data::demo::CameraAxisMovement::State::kDecelerating;
-                        QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_x.deceleration_timestamp);
+                        //QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_x.deceleration_timestamp);
+                        t2::hooks::OriginalQueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_x.deceleration_timestamp);
                         t2::game_data::demo::camera_axis_movement_x.velocity_before_deceleration = t2::game_data::demo::camera_axis_movement_x.current_velocity;
                     }
                 }
@@ -733,7 +741,8 @@ LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPAR
                     if ((t2::game_data::demo::camera_axis_movement_y.direction == t2::game_data::demo::CameraAxisMovement::Direction::kPositive && wParam == 0x57) || (t2::game_data::demo::camera_axis_movement_y.direction == t2::game_data::demo::CameraAxisMovement::Direction::kNegative && wParam == 0x53)) {
                         PLOG_DEBUG << "Decelerating";
                         t2::game_data::demo::camera_axis_movement_y.state = t2::game_data::demo::CameraAxisMovement::State::kDecelerating;
-                        QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_y.deceleration_timestamp);
+                        //QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_y.deceleration_timestamp);
+                        t2::hooks::OriginalQueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_y.deceleration_timestamp);
                         t2::game_data::demo::camera_axis_movement_y.velocity_before_deceleration = t2::game_data::demo::camera_axis_movement_y.current_velocity;
                     }
                 }

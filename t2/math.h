@@ -14,6 +14,16 @@
 namespace t2 {
     namespace math {
 
+        inline double clamp(double value, double min, double max){
+            if (value < min){
+                return min;
+            }
+            if (value > max){
+                return max;
+            }
+            return value;
+        }
+        
         inline void mSinCos(const float angle, float& s, float& c)
         {
             s = sin(angle);

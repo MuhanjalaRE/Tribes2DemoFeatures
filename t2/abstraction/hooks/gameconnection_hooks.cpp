@@ -137,6 +137,7 @@ namespace t2 {
 					t2::game_data::demo::initialised = false;
 					OriginalDemoPlayBackComplete(this_gameconnection);
 					t2::game_data::demo::first_person = true;
+					//t2::game_data::demo::camera_movement_state = t2::game_data::demo::CameraMovementState::kStopped;
 				}
 
 

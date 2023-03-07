@@ -1,6 +1,7 @@
 #include <t2/game data/demo.h>
 #include <t2/abstraction/GameConnection.h>
 #include <t2/abstraction/NetConnection.h>
+#include <Windows.h>
 
 namespace t2 {
 	namespace game_data {
@@ -27,6 +28,16 @@ namespace t2 {
 			float zoom_fov_delta_per_second = 120;
 			float max_fov = 179;
 			float min_fov = 1;
+			/*CameraMovementState camera_movement_state = CameraMovementState::kStopped;
+			LARGE_INTEGER camera_movement_start_time = {0};
+			CameraMovementDirection camera_movement_direction = CameraMovementDirection::kNone;
+			float camera_movement_acceleration = 1.0f;
+			extern float maximum_camera_velocity = 0.33;
+			*/
+
+			CameraAxisMovement camera_axis_movement_x;
+			CameraAxisMovement camera_axis_movement_y;
+			CameraAxisMovement camera_axis_movement_z;
 
 			void ToggleViewTarget(void){
 				if (!game_connection)

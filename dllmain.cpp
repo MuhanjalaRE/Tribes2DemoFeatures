@@ -672,7 +672,7 @@ LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPAR
                     } else if (wParam == 0x44) {  // if we're moving right, we're going positive along the x axis
                         t2::game_data::demo::camera_axis_movement_x.direction = t2::game_data::demo::CameraAxisMovement::Direction::kPositive;
                     }
-                    QueryPerformanceCounter_(&t2::game_data::demo::camera_axis_movement_x.acceleration_timestamp);
+                    QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_x.acceleration_timestamp);
                     t2::game_data::demo::camera_axis_movement_x.state = t2::game_data::demo::CameraAxisMovement::State::kAccelerating;
                     t2::game_data::demo::camera_axis_movement_x.current_velocity = 0;
                 } /* else if (t2::game_data::demo::camera_axis_movement_x.state != t2::game_data::demo::CameraAxisMovement::State::kStopped) {
@@ -694,7 +694,7 @@ LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPAR
                     } else if (wParam == 0x53) {  // if we're moving backwards, we're going negative along the y axis
                         t2::game_data::demo::camera_axis_movement_y.direction = t2::game_data::demo::CameraAxisMovement::Direction::kNegative;
                     }
-                    QueryPerformanceCounter_(&t2::game_data::demo::camera_axis_movement_y.acceleration_timestamp);
+                    QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_y.acceleration_timestamp);
                     t2::game_data::demo::camera_axis_movement_y.state = t2::game_data::demo::CameraAxisMovement::State::kAccelerating;
                     t2::game_data::demo::camera_axis_movement_y.current_velocity = 0;
                 } /* else if (t2::game_data::demo::camera_axis_movement_y.state != t2::game_data::demo::CameraAxisMovement::State::kStopped) {

@@ -34,8 +34,8 @@ WNDPROC original_windowproc_callback = NULL;
 LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 typedef LRESULT(__stdcall* SetWindowLongPtr_)(HWND, int, long);
 SetWindowLongPtr_ OriginalSetWindowLongPtr = NULL;
-//typedef BOOL(__stdcall* QueryPerformanceCounter_)(LARGE_INTEGER* lpPerformanceCount);
-//QueryPerformanceCounter_ OriginalQueryPerformanceCounter = NULL;
+// typedef BOOL(__stdcall* QueryPerformanceCounter_)(LARGE_INTEGER* lpPerformanceCount);
+// QueryPerformanceCounter_ OriginalQueryPerformanceCounter = NULL;
 DWORD game_thread_id = NULL;
 LARGE_INTEGER initial_performance_counter = {0};
 LARGE_INTEGER current_performance_counter = {0};
@@ -320,21 +320,29 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 
         ImGui::Separator();
 
-        ImGui::SliderFloat("Camera movement acceleration per second (Forward/Backward)", &t2::game_data::demo::camera_axis_movement_y.acceleration_per_second, 1E-2, 1);
-        ImGui::SliderFloat("Camera movement deceleration per second (Forward/Backward)", &t2::game_data::demo::camera_axis_movement_y.deceleration_per_second, 1E-2, 1);
-        ImGui::SliderFloat("Camera movement maximum velocity (Forward/Backward)", &t2::game_data::demo::camera_axis_movement_y.maximum_velocity, 1E-2, 1E0);
+        static bool camera_movement_use_acceleration = t2::game_data::demo::camera_axis_movement_type == t2::game_data::demo::CameraAxisMovementType::KAcceleration;
+        ImGui::Checkbox("Use acceleration for camera movement", &camera_movement_use_acceleration);
+        if (camera_movement_use_acceleration) {
+            t2::game_data::demo::camera_axis_movement_type = t2::game_data::demo::CameraAxisMovementType::KAcceleration;
+            ImGui::SliderFloat("Camera movement acceleration per second (Forward/Backward)", &t2::game_data::demo::camera_axis_movement_y.acceleration_per_second, 1E-2, 1, "%.3f", ImGuiSliderFlags_::ImGuiSliderFlags_AlwaysClamp);
+            ImGui::SliderFloat("Camera movement deceleration per second (Forward/Backward)", &t2::game_data::demo::camera_axis_movement_y.deceleration_per_second, 1E-2, 1, "%.3f", ImGuiSliderFlags_::ImGuiSliderFlags_AlwaysClamp);
+            ImGui::SliderFloat("Camera movement maximum velocity (Forward/Backward)", &t2::game_data::demo::camera_axis_movement_y.maximum_velocity, 1E-2, 1E0, "%.3f", ImGuiSliderFlags_::ImGuiSliderFlags_AlwaysClamp);
 
-        ImGui::Separator();
+            ImGui::Separator();
 
-        ImGui::SliderFloat("Camera movement acceleration per second (Left/Right)", &t2::game_data::demo::camera_axis_movement_x.acceleration_per_second, 1E-2, 1);
-        ImGui::SliderFloat("Camera movement deceleration per second (Left/Right)", &t2::game_data::demo::camera_axis_movement_x.deceleration_per_second, 1E-2, 1);
-        ImGui::SliderFloat("Camera movement maximum velocity (Left/Right)", &t2::game_data::demo::camera_axis_movement_x.maximum_velocity, 1E-2, 1E0);
+            ImGui::SliderFloat("Camera movement acceleration per second (Left/Right)", &t2::game_data::demo::camera_axis_movement_x.acceleration_per_second, 1E-2, 1, "%.3f", ImGuiSliderFlags_::ImGuiSliderFlags_AlwaysClamp);
+            ImGui::SliderFloat("Camera movement deceleration per second (Left/Right)", &t2::game_data::demo::camera_axis_movement_x.deceleration_per_second, 1E-2, 1, "%.3f", ImGuiSliderFlags_::ImGuiSliderFlags_AlwaysClamp);
+            ImGui::SliderFloat("Camera movement maximum velocity (Left/Right)", &t2::game_data::demo::camera_axis_movement_x.maximum_velocity, 1E-2, 1E0, "%.3f", ImGuiSliderFlags_::ImGuiSliderFlags_AlwaysClamp);
+        } else {
+            t2::game_data::demo::camera_axis_movement_type = t2::game_data::demo::CameraAxisMovementType::kInstant;
+            ImGui::SliderFloat("Camera movement speed", &t2::settings::camera_move_speed_xy, 1E-2, 1E0);
+        }
 
         ImGui::Separator();
         ImGui::Checkbox("Show player model", &t2::settings::show_player_model);
         ImGui::Checkbox("Show weapon model", &t2::settings::show_weapon_model);
         ImGui::Separator();
-        ImGui::SliderFloat("Speed scale", &t2::game_data::demo::speed_hack_scale, 0.1, 10, "%.3f", ImGuiSliderFlags_::ImGuiSliderFlags_Logarithmic);
+        ImGui::SliderFloat("Speed scale", &t2::game_data::demo::speed_hack_scale, 0.1, 10, "%.3f", ImGuiSliderFlags_::ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_::ImGuiSliderFlags_AlwaysClamp);
 
 #ifdef USE_AIMTRACKER
         ImGui::BeginGroup();
@@ -530,7 +538,7 @@ void OnDLLProcessAttach(void) {
         t2::hooks::OriginalQueryPerformanceCounter = (t2::hooks::QueryPerformanceCounter_)queryperformancecounter_address;
         t2::hooks::OriginalQueryPerformanceCounter(&initial_performance_counter);
         previous_performance_counter = initial_performance_counter;
-        //t2::game_data::demo::OriginalQueryPerformanceCounter = (t2::game_data::demo::QueryPerformanceCounter_)queryperformancecounter_address;
+        // t2::game_data::demo::OriginalQueryPerformanceCounter = (t2::game_data::demo::QueryPerformanceCounter_)queryperformancecounter_address;
         game_thread_id = GetCurrentThreadId();
     }
 
@@ -592,9 +600,9 @@ void OnDLLProcessAttach(void) {
     if (t2::hooks::opengl::OriginalGluProject)
         DetourAttach(&(PVOID&)t2::hooks::opengl::OriginalGluProject, t2::hooks::opengl::GluProjectHook);
 
-    if (t2::hooks::OriginalQueryPerformanceCounter){
+    if (t2::hooks::OriginalQueryPerformanceCounter) {
         DetourAttach(&(PVOID&)t2::hooks::OriginalQueryPerformanceCounter, QueryPerformanceCounterHook);
-        //t2::game_data::demo::OriginalQueryPerformanceCounter = (t2::game_data::demo::QueryPerformanceCounter_)OriginalQueryPerformanceCounter;
+        // t2::game_data::demo::OriginalQueryPerformanceCounter = (t2::game_data::demo::QueryPerformanceCounter_)OriginalQueryPerformanceCounter;
     }
 
     DetourTransactionCommit();
@@ -666,86 +674,89 @@ LRESULT WINAPI CustomWindowProcCallback(HWND hWnd, UINT msg, WPARAM wParam, LPAR
                 t2::game_data::demo::speed_hack_scale = 1;
             }
 
-            // If we tried to move the camera left or right
-            if (wParam == 0x41 || wParam == 0x44) {
-                // if the camera is stopped
-                if (t2::game_data::demo::camera_axis_movement_x.state == t2::game_data::demo::CameraAxisMovement::State::kStopped) {
-                    PLOG_DEBUG << "Accelerating on X axis";
-                    if (wParam == 0x41) {  // if we 're moving left, we're going negative along the x axis
-                        t2::game_data::demo::camera_axis_movement_x.direction = t2::game_data::demo::CameraAxisMovement::Direction::kNegative;
-                    } else if (wParam == 0x44) {  // if we're moving right, we're going positive along the x axis
-                        t2::game_data::demo::camera_axis_movement_x.direction = t2::game_data::demo::CameraAxisMovement::Direction::kPositive;
-                    }
-                    //QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_x.acceleration_timestamp);
-                    t2::hooks::OriginalQueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_x.acceleration_timestamp);
-                    t2::game_data::demo::camera_axis_movement_x.state = t2::game_data::demo::CameraAxisMovement::State::kAccelerating;
-                    t2::game_data::demo::camera_axis_movement_x.current_velocity = 0;
-                } /* else if (t2::game_data::demo::camera_axis_movement_x.state != t2::game_data::demo::CameraAxisMovement::State::kStopped) {
-                    // if the camera is already moving in one direction but we press a key in the other direction, we should ignore the new keypress
-                    if ((t2::game_data::demo::camera_axis_movement_x.direction == t2::game_data::demo::CameraAxisMovement::Direction::kPositive && wParam == 0x41) || (t2::game_data::demo::camera_axis_movement_x.direction == t2::game_data::demo::CameraAxisMovement::Direction::kNegative && wParam == 0x44)) {
-                        keys::key_states[wParam] = false;
-                    }
-                }*/
-            }
+            if (t2::game_data::demo::camera_axis_movement_type == t2::game_data::demo::CameraAxisMovementType::KAcceleration) {
+                // If we tried to move the camera left or right
+                if (wParam == 0x41 || wParam == 0x44) {
+                    // if the camera is stopped
+                    if (t2::game_data::demo::camera_axis_movement_x.state == t2::game_data::demo::CameraAxisMovement::State::kStopped) {
+                        PLOG_DEBUG << "Accelerating on X axis";
+                        if (wParam == 0x41) {  // if we 're moving left, we're going negative along the x axis
+                            t2::game_data::demo::camera_axis_movement_x.direction = t2::game_data::demo::CameraAxisMovement::Direction::kNegative;
+                        } else if (wParam == 0x44) {  // if we're moving right, we're going positive along the x axis
+                            t2::game_data::demo::camera_axis_movement_x.direction = t2::game_data::demo::CameraAxisMovement::Direction::kPositive;
+                        }
+                        // QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_x.acceleration_timestamp);
+                        t2::hooks::OriginalQueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_x.acceleration_timestamp);
+                        t2::game_data::demo::camera_axis_movement_x.state = t2::game_data::demo::CameraAxisMovement::State::kAccelerating;
+                        t2::game_data::demo::camera_axis_movement_x.current_velocity = 0;
+                    } /* else if (t2::game_data::demo::camera_axis_movement_x.state != t2::game_data::demo::CameraAxisMovement::State::kStopped) {
+                        // if the camera is already moving in one direction but we press a key in the other direction, we should ignore the new keypress
+                        if ((t2::game_data::demo::camera_axis_movement_x.direction == t2::game_data::demo::CameraAxisMovement::Direction::kPositive && wParam == 0x41) || (t2::game_data::demo::camera_axis_movement_x.direction == t2::game_data::demo::CameraAxisMovement::Direction::kNegative && wParam == 0x44)) {
+                            keys::key_states[wParam] = false;
+                        }
+                    }*/
+                }
 
-            // if we tried to move the camera forward or backward
-            if (wParam == 0x57 || wParam == 0x53) {
-                // if the camera is stopped
-                
-                if (t2::game_data::demo::camera_axis_movement_y.state == t2::game_data::demo::CameraAxisMovement::State::kStopped) {
-                    PLOG_DEBUG << "Accelerating";
-                    if (wParam == 0x57) {  // if we 're moving forward, we're going positive along the y axis
-                        t2::game_data::demo::camera_axis_movement_y.direction = t2::game_data::demo::CameraAxisMovement::Direction::kPositive;
-                    } else if (wParam == 0x53) {  // if we're moving backwards, we're going negative along the y axis
-                        t2::game_data::demo::camera_axis_movement_y.direction = t2::game_data::demo::CameraAxisMovement::Direction::kNegative;
-                    }
-                    //QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_y.acceleration_timestamp);
-                    t2::hooks::OriginalQueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_y.acceleration_timestamp);
-                    t2::game_data::demo::camera_axis_movement_y.state = t2::game_data::demo::CameraAxisMovement::State::kAccelerating;
-                    t2::game_data::demo::camera_axis_movement_y.current_velocity = 0;
-                } /* else if (t2::game_data::demo::camera_axis_movement_y.state != t2::game_data::demo::CameraAxisMovement::State::kStopped) {
-                    // if the camera is already moving in one direction but we press a key in the other direction, we should ignore the new keypress
-                    if ((t2::game_data::demo::camera_axis_movement_y.direction == t2::game_data::demo::CameraAxisMovement::Direction::kPositive && wParam == 0x53) || (t2::game_data::demo::camera_axis_movement_y.direction == t2::game_data::demo::CameraAxisMovement::Direction::kNegative && wParam == 0x57)) {
-                        keys::key_states[wParam] = false;
-                    }
-                } */
+                // if we tried to move the camera forward or backward
+                if (wParam == 0x57 || wParam == 0x53) {
+                    // if the camera is stopped
+
+                    if (t2::game_data::demo::camera_axis_movement_y.state == t2::game_data::demo::CameraAxisMovement::State::kStopped) {
+                        PLOG_DEBUG << "Accelerating";
+                        if (wParam == 0x57) {  // if we 're moving forward, we're going positive along the y axis
+                            t2::game_data::demo::camera_axis_movement_y.direction = t2::game_data::demo::CameraAxisMovement::Direction::kPositive;
+                        } else if (wParam == 0x53) {  // if we're moving backwards, we're going negative along the y axis
+                            t2::game_data::demo::camera_axis_movement_y.direction = t2::game_data::demo::CameraAxisMovement::Direction::kNegative;
+                        }
+                        // QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_y.acceleration_timestamp);
+                        t2::hooks::OriginalQueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_y.acceleration_timestamp);
+                        t2::game_data::demo::camera_axis_movement_y.state = t2::game_data::demo::CameraAxisMovement::State::kAccelerating;
+                        t2::game_data::demo::camera_axis_movement_y.current_velocity = 0;
+                    } /* else if (t2::game_data::demo::camera_axis_movement_y.state != t2::game_data::demo::CameraAxisMovement::State::kStopped) {
+                        // if the camera is already moving in one direction but we press a key in the other direction, we should ignore the new keypress
+                        if ((t2::game_data::demo::camera_axis_movement_y.direction == t2::game_data::demo::CameraAxisMovement::Direction::kPositive && wParam == 0x53) || (t2::game_data::demo::camera_axis_movement_y.direction == t2::game_data::demo::CameraAxisMovement::Direction::kNegative && wParam == 0x57)) {
+                            keys::key_states[wParam] = false;
+                        }
+                    } */
+                }
+            } else if (t2::game_data::demo::camera_axis_movement_type == t2::game_data::demo::CameraAxisMovementType::kInstant) {
             }
 
             PLOG_DEBUG << "Key pressed : " << std::hex << wParam << std::dec;
 
         } else if (msg == WM_KEYUP) {
-            
             PLOG_DEBUG << "Key unpressed : " << std::hex << wParam << std::dec;
-            // If we tried to move the camera left or right
-            if (wParam == 0x41 || wParam == 0x44) {
-                // just an extra sanity check to ensure we only care about key ups when the camera is accelerating
-                if (t2::game_data::demo::camera_axis_movement_x.state == t2::game_data::demo::CameraAxisMovement::State::kAccelerating) {
-                    
-                    // We are moving in a certain direction and the key associated to mvoving in that direction has been released
-                    if ((t2::game_data::demo::camera_axis_movement_x.direction == t2::game_data::demo::CameraAxisMovement::Direction::kNegative && wParam == 0x41) || (t2::game_data::demo::camera_axis_movement_x.direction == t2::game_data::demo::CameraAxisMovement::Direction::kPositive && wParam == 0x44)) {
-                        PLOG_DEBUG << "Decelerating on X axis";
-                        t2::game_data::demo::camera_axis_movement_x.state = t2::game_data::demo::CameraAxisMovement::State::kDecelerating;
-                        //QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_x.deceleration_timestamp);
-                        t2::hooks::OriginalQueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_x.deceleration_timestamp);
-                        t2::game_data::demo::camera_axis_movement_x.velocity_before_deceleration = t2::game_data::demo::camera_axis_movement_x.current_velocity;
+            if (t2::game_data::demo::camera_axis_movement_type == t2::game_data::demo::CameraAxisMovementType::KAcceleration) {
+                // If we tried to move the camera left or right
+                if (wParam == 0x41 || wParam == 0x44) {
+                    // just an extra sanity check to ensure we only care about key ups when the camera is accelerating
+                    if (t2::game_data::demo::camera_axis_movement_x.state == t2::game_data::demo::CameraAxisMovement::State::kAccelerating) {
+                        // We are moving in a certain direction and the key associated to mvoving in that direction has been released
+                        if ((t2::game_data::demo::camera_axis_movement_x.direction == t2::game_data::demo::CameraAxisMovement::Direction::kNegative && wParam == 0x41) || (t2::game_data::demo::camera_axis_movement_x.direction == t2::game_data::demo::CameraAxisMovement::Direction::kPositive && wParam == 0x44)) {
+                            PLOG_DEBUG << "Decelerating on X axis";
+                            t2::game_data::demo::camera_axis_movement_x.state = t2::game_data::demo::CameraAxisMovement::State::kDecelerating;
+                            // QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_x.deceleration_timestamp);
+                            t2::hooks::OriginalQueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_x.deceleration_timestamp);
+                            t2::game_data::demo::camera_axis_movement_x.velocity_before_deceleration = t2::game_data::demo::camera_axis_movement_x.current_velocity;
+                        }
                     }
                 }
-            }
 
-            // If we tried to move the camera forward or backward
-            if (wParam == 0x57 || wParam == 0x53) {
-                // just an extra sanity check to ensure we only care about key ups when the camera is accelerating
-                if (t2::game_data::demo::camera_axis_movement_y.state == t2::game_data::demo::CameraAxisMovement::State::kAccelerating) {
-                    
-                    // We are moving in a certain direction and the key associated to mvoving in that direction has been released
-                    if ((t2::game_data::demo::camera_axis_movement_y.direction == t2::game_data::demo::CameraAxisMovement::Direction::kPositive && wParam == 0x57) || (t2::game_data::demo::camera_axis_movement_y.direction == t2::game_data::demo::CameraAxisMovement::Direction::kNegative && wParam == 0x53)) {
-                        PLOG_DEBUG << "Decelerating";
-                        t2::game_data::demo::camera_axis_movement_y.state = t2::game_data::demo::CameraAxisMovement::State::kDecelerating;
-                        //QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_y.deceleration_timestamp);
-                        t2::hooks::OriginalQueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_y.deceleration_timestamp);
-                        t2::game_data::demo::camera_axis_movement_y.velocity_before_deceleration = t2::game_data::demo::camera_axis_movement_y.current_velocity;
+                // If we tried to move the camera forward or backward
+                if (wParam == 0x57 || wParam == 0x53) {
+                    // just an extra sanity check to ensure we only care about key ups when the camera is accelerating
+                    if (t2::game_data::demo::camera_axis_movement_y.state == t2::game_data::demo::CameraAxisMovement::State::kAccelerating) {
+                        // We are moving in a certain direction and the key associated to mvoving in that direction has been released
+                        if ((t2::game_data::demo::camera_axis_movement_y.direction == t2::game_data::demo::CameraAxisMovement::Direction::kPositive && wParam == 0x57) || (t2::game_data::demo::camera_axis_movement_y.direction == t2::game_data::demo::CameraAxisMovement::Direction::kNegative && wParam == 0x53)) {
+                            PLOG_DEBUG << "Decelerating";
+                            t2::game_data::demo::camera_axis_movement_y.state = t2::game_data::demo::CameraAxisMovement::State::kDecelerating;
+                            // QueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_y.deceleration_timestamp);
+                            t2::hooks::OriginalQueryPerformanceCounter(&t2::game_data::demo::camera_axis_movement_y.deceleration_timestamp);
+                            t2::game_data::demo::camera_axis_movement_y.velocity_before_deceleration = t2::game_data::demo::camera_axis_movement_y.current_velocity;
+                        }
                     }
                 }
+            } else if (t2::game_data::demo::camera_axis_movement_type == t2::game_data::demo::CameraAxisMovementType::kInstant) {
             }
 
             keys::key_states[wParam] = false;

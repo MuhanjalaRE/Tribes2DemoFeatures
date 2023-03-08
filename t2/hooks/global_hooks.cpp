@@ -53,6 +53,7 @@ void FpsUpdateHook(void) {
     // QueryPerformanceCounter(&performance_count);
     t2::hooks::OriginalQueryPerformanceCounter(&performance_count);
     double delta_time = (((double)(performance_count.QuadPart - previous_performance_count.QuadPart)) / frequency.QuadPart) * 1000.0f;
+    // PLOG_DEBUG << "Delta time = " << delta_time;
 
     previous_performance_count = performance_count;
 
@@ -69,14 +70,17 @@ void FpsUpdateHook(void) {
     *((float*)0x762A40) = 1;
     */
 
+   PLOG_DEBUG << "Delta time mul by scale : " << (delta_time * t2::game_data::demo::speed_hack_scale);
+   PLOG_DEBUG << "Delta time div by scale : " << (delta_time / t2::game_data::demo::speed_hack_scale);
+
     if (keys::key_states[0x5A]) {  // z key - zoom out
-        t2::settings::camera_fov += (t2::game_data::demo::zoom_fov_delta_per_second / t2::game_data::demo::fps) / t2::game_data::demo::speed_hack_scale;
+        t2::settings::camera_fov += (t2::game_data::demo::zoom_fov_delta_per_second * (delta_time/1000.0f));
         if (t2::settings::camera_fov > t2::game_data::demo::max_fov) {
             t2::settings::camera_fov = t2::game_data::demo::max_fov;
         }
     }
     if (keys::key_states[0x58]) {  // x key - zoom in
-        t2::settings::camera_fov -= (t2::game_data::demo::zoom_fov_delta_per_second / t2::game_data::demo::fps) / t2::game_data::demo::speed_hack_scale;
+        t2::settings::camera_fov -= (t2::game_data::demo::zoom_fov_delta_per_second * (delta_time/1000.0f));
         if (t2::settings::camera_fov < t2::game_data::demo::min_fov) {
             t2::settings::camera_fov = t2::game_data::demo::min_fov;
         }
@@ -129,74 +133,76 @@ void FpsUpdateHook(void) {
         // static t2::math::Vector m_rot = *camera_object.m_rot_;
         static const float max_pitch = 1.3962;
 
-        if (keys::mouse_states[3] >= 1) {
-            if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
-                t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch * keys::mouse_states[3];
-            else {
-                t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch * keys::mouse_states[3];
-                // t2::game_data::demo::camera_rotation.x_ = sin(t2::game_data::demo::camera_rotation.x_);
+        if (t2::game_data::demo::camera_axis_rotation_type == t2::game_data::demo::CameraAxisRotationType::kInstant) {
+            if (keys::mouse_states[3] >= 1) {
+                if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+                    t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch * keys::mouse_states[3] / t2::game_data::demo::speed_hack_scale;
+                else {
+                    t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch * keys::mouse_states[3] / t2::game_data::demo::speed_hack_scale;
+                    // t2::game_data::demo::camera_rotation.x_ = sin(t2::game_data::demo::camera_rotation.x_);
+                }
+            } else if (keys::key_states[0x49]) {
+                if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+                    t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch / t2::game_data::demo::speed_hack_scale;
+                else {
+                    t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch / t2::game_data::demo::speed_hack_scale;
+                    // t2::game_data::demo::camera_rotation.x_ = sin(t2::game_data::demo::camera_rotation.x_);
+                }
             }
-        } else if (keys::key_states[0x49]) {
-            if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
-                t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch;
-            else {
-                t2::game_data::demo::camera_rotation.x_ += settings::camera_rotation_speed_pitch;
-                // t2::game_data::demo::camera_rotation.x_ = sin(t2::game_data::demo::camera_rotation.x_);
-            }
-        }
 
-        if (keys::mouse_states[3] <= -1) {
-            if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
-                t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch * abs(keys::mouse_states[3]);
-            else {
-                t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch * abs(keys::mouse_states[3]);
-                // t2::game_data::demo::camera_rotation.x_ = sin(t2::game_data::demo::camera_rotation.x_);
+            if (keys::mouse_states[3] <= -1) {
+                if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+                    t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch * abs(keys::mouse_states[3]) / t2::game_data::demo::speed_hack_scale;
+                else {
+                    t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch * abs(keys::mouse_states[3]) / t2::game_data::demo::speed_hack_scale;
+                    // t2::game_data::demo::camera_rotation.x_ = sin(t2::game_data::demo::camera_rotation.x_);
+                }
+            } else if (keys::key_states[0x4B]) {
+                if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+                    t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch / t2::game_data::demo::speed_hack_scale;
+                else {
+                    t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch / t2::game_data::demo::speed_hack_scale;
+                    // t2::game_data::demo::camera_rotation.x_ = sin(t2::game_data::demo::camera_rotation.x_);
+                }
             }
-        } else if (keys::key_states[0x4B]) {
-            if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
-                t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch;
-            else {
-                t2::game_data::demo::camera_rotation.x_ -= settings::camera_rotation_speed_pitch;
-                // t2::game_data::demo::camera_rotation.x_ = sin(t2::game_data::demo::camera_rotation.x_);
-            }
-        }
 
-        /*/
-        if (m_rot.x_ > max_pitch)
-                m_rot.x_ = max_pitch;
-        else if (m_rot.x_ < -max_pitch)
-                m_rot.x_ = -max_pitch;
-        */
+            /*/
+            if (m_rot.x_ > max_pitch)
+                    m_rot.x_ = max_pitch;
+            else if (m_rot.x_ < -max_pitch)
+                    m_rot.x_ = -max_pitch;
+            */
 
-        if (keys::mouse_states[2] >= 1) {
-            if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
-                t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw * keys::mouse_states[2];
-            else {
-                t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw * keys::mouse_states[2];
-                // t2::game_data::demo::camera_rotation.z_ = sin(t2::game_data::demo::camera_rotation.z_);
+            if (keys::mouse_states[2] >= 1) {
+                if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+                    t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw * keys::mouse_states[2] / t2::game_data::demo::speed_hack_scale;
+                else {
+                    t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw * keys::mouse_states[2] / t2::game_data::demo::speed_hack_scale;
+                    // t2::game_data::demo::camera_rotation.z_ = sin(t2::game_data::demo::camera_rotation.z_);
+                }
+            } else if (keys::key_states[0x4C]) {
+                if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+                    t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw / t2::game_data::demo::speed_hack_scale;
+                else {
+                    t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw / t2::game_data::demo::speed_hack_scale;
+                    // t2::game_data::demo::camera_rotation.z_ = sin(t2::game_data::demo::camera_rotation.z_);
+                }
             }
-        } else if (keys::key_states[0x4C]) {
-            if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
-                t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw;
-            else {
-                t2::game_data::demo::camera_rotation.z_ += settings::camera_rotation_speed_yaw;
-                // t2::game_data::demo::camera_rotation.z_ = sin(t2::game_data::demo::camera_rotation.z_);
-            }
-        }
 
-        if (keys::mouse_states[2] <= -1) {
-            if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
-                t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw * abs(keys::mouse_states[2]);
-            else {
-                t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw * abs(keys::mouse_states[2]);
-                // t2::game_data::demo::camera_rotation.z_ - sin(t2::game_data::demo::camera_rotation.z_);
-            }
-        } else if (keys::key_states[0x4A]) {
-            if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
-                t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw;
-            else {
-                t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw;
-                // t2::game_data::demo::camera_rotation.z_ - sin(t2::game_data::demo::camera_rotation.z_);
+            if (keys::mouse_states[2] <= -1) {
+                if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+                    t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw * abs(keys::mouse_states[2]) / t2::game_data::demo::speed_hack_scale;
+                else {
+                    t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw * abs(keys::mouse_states[2]) / t2::game_data::demo::speed_hack_scale;
+                    // t2::game_data::demo::camera_rotation.z_ - sin(t2::game_data::demo::camera_rotation.z_);
+                }
+            } else if (keys::key_states[0x4A]) {
+                if (t2::game_data::demo::view_target == t2::game_data::demo::ViewTarget::kCamera)
+                    t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw / t2::game_data::demo::speed_hack_scale;
+                else {
+                    t2::game_data::demo::camera_rotation.z_ -= settings::camera_rotation_speed_yaw / t2::game_data::demo::speed_hack_scale;
+                    // t2::game_data::demo::camera_rotation.z_ - sin(t2::game_data::demo::camera_rotation.z_);
+                }
             }
         }
 
@@ -229,123 +235,143 @@ delta_time_for_camera_movement /= 1000.0f;
 
         // Works good, add deceleration tomorrow -> same thing, just opposite direction
         // make acceleration rate frame rate independent (like zoom)?
-        if (t2::game_data::demo::camera_axis_movement_y.state != t2::game_data::demo::CameraAxisMovement::State::kStopped) {
-            if (t2::game_data::demo::camera_axis_movement_y.direction == t2::game_data::demo::CameraAxisMovement::Direction::kPositive) {  // forward
-                                                                                                                                           // direction.z_ = 0;
-                // double delta_time_for_camera_movement = t2::game_data::demo::camera_axis_movement_y.state == t2::game_data::demo::CameraAxisMovement::State::kAccelerating ? (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_y.acceleration_timestamp.QuadPart)) / frequency.QuadPart) : (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_y.deceleration_timestamp.QuadPart)) / frequency.QuadPart);
 
-                if (t2::game_data::demo::camera_axis_movement_y.state == t2::game_data::demo::CameraAxisMovement::State::kAccelerating) {
-                    double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_y.acceleration_timestamp.QuadPart)) / frequency.QuadPart) / t2::game_data::demo::speed_hack_scale;
+        if (t2::game_data::demo::camera_axis_movement_type == t2::game_data::demo::CameraAxisMovementType::KAcceleration) {
+            if (t2::game_data::demo::camera_axis_movement_y.state != t2::game_data::demo::CameraAxisMovement::State::kStopped) {
+                if (t2::game_data::demo::camera_axis_movement_y.direction == t2::game_data::demo::CameraAxisMovement::Direction::kPositive) {  // forward
+                                                                                                                                               // direction.z_ = 0;
+                    // double delta_time_for_camera_movement = t2::game_data::demo::camera_axis_movement_y.state == t2::game_data::demo::CameraAxisMovement::State::kAccelerating ? (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_y.acceleration_timestamp.QuadPart)) / frequency.QuadPart) : (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_y.deceleration_timestamp.QuadPart)) / frequency.QuadPart);
 
-                    float current_velocity = t2::math::clamp(0 + t2::game_data::demo::camera_axis_movement_y.acceleration_per_second * delta_time_for_camera_movement /* / t2::game_data::demo::fps*/, 0 * t2::game_data::demo::camera_axis_movement_y.minimum_velocity, t2::game_data::demo::camera_axis_movement_y.maximum_velocity);
+                    if (t2::game_data::demo::camera_axis_movement_y.state == t2::game_data::demo::CameraAxisMovement::State::kAccelerating) {
+                        double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_y.acceleration_timestamp.QuadPart)) / frequency.QuadPart) /*/ t2::game_data::demo::speed_hack_scale*/;
 
-                    t2::game_data::demo::camera_axis_movement_y.current_velocity = current_velocity;
+                        float current_velocity = t2::math::clamp(0 + t2::game_data::demo::camera_axis_movement_y.acceleration_per_second * delta_time_for_camera_movement /* / t2::game_data::demo::fps*/, 0 * t2::game_data::demo::camera_axis_movement_y.minimum_velocity, t2::game_data::demo::camera_axis_movement_y.maximum_velocity);
 
-                    PLOG_DEBUG << "Accelerating forward at " << current_velocity << ", delta = " << delta_time_for_camera_movement;
-                    position += direction.Unit() * t2::game_data::demo::camera_axis_movement_y.current_velocity;
-                } else if (t2::game_data::demo::camera_axis_movement_y.state == t2::game_data::demo::CameraAxisMovement::State::kDecelerating) {
-                    double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_y.deceleration_timestamp.QuadPart)) / frequency.QuadPart) / t2::game_data::demo::speed_hack_scale;
+                        t2::game_data::demo::camera_axis_movement_y.current_velocity = current_velocity;
 
-                    float current_velocity = t2::math::clamp(t2::game_data::demo::camera_axis_movement_y.velocity_before_deceleration - t2::game_data::demo::camera_axis_movement_y.deceleration_per_second * delta_time_for_camera_movement /*/ t2::game_data::demo::fps */, 0 * t2::game_data::demo::camera_axis_movement_y.minimum_velocity, t2::game_data::demo::camera_axis_movement_y.maximum_velocity);
+                        PLOG_DEBUG << "Accelerating forward at " << current_velocity << ", delta = " << delta_time_for_camera_movement;
+                        position += direction.Unit() * t2::game_data::demo::camera_axis_movement_y.current_velocity * delta_time;
+                    } else if (t2::game_data::demo::camera_axis_movement_y.state == t2::game_data::demo::CameraAxisMovement::State::kDecelerating) {
+                        double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_y.deceleration_timestamp.QuadPart)) / frequency.QuadPart) /*/ t2::game_data::demo::speed_hack_scale*/;
 
-                    t2::game_data::demo::camera_axis_movement_y.current_velocity = current_velocity;
-                    if (current_velocity == 0) {
-                        t2::game_data::demo::camera_axis_movement_y.state = t2::game_data::demo::CameraAxisMovement::State::kStopped;
-                        t2::game_data::demo::camera_axis_movement_y.direction = t2::game_data::demo::CameraAxisMovement::Direction::kNone;
+                        float current_velocity = t2::math::clamp(t2::game_data::demo::camera_axis_movement_y.velocity_before_deceleration - t2::game_data::demo::camera_axis_movement_y.deceleration_per_second * delta_time_for_camera_movement /*/ t2::game_data::demo::fps */, 0 * t2::game_data::demo::camera_axis_movement_y.minimum_velocity, t2::game_data::demo::camera_axis_movement_y.maximum_velocity);
+
+                        t2::game_data::demo::camera_axis_movement_y.current_velocity = current_velocity;
+                        if (current_velocity == 0) {
+                            t2::game_data::demo::camera_axis_movement_y.state = t2::game_data::demo::CameraAxisMovement::State::kStopped;
+                            t2::game_data::demo::camera_axis_movement_y.direction = t2::game_data::demo::CameraAxisMovement::Direction::kNone;
+                        }
+
+                        PLOG_DEBUG << "Decelerating forward at " << current_velocity << ", delta = " << delta_time_for_camera_movement;
+
+                        position += direction.Unit() * t2::game_data::demo::camera_axis_movement_y.current_velocity * delta_time;
                     }
+                }
+                if (t2::game_data::demo::camera_axis_movement_y.direction == t2::game_data::demo::CameraAxisMovement::Direction::kNegative) {  // backward
+                    // direction.z_ = 0;
+                    if (t2::game_data::demo::camera_axis_movement_y.state == t2::game_data::demo::CameraAxisMovement::State::kAccelerating) {
+                        double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_y.acceleration_timestamp.QuadPart)) / frequency.QuadPart) /*/ t2::game_data::demo::speed_hack_scale*/;
 
-                    PLOG_DEBUG << "Decelerating forward at " << current_velocity << ", delta = " << delta_time_for_camera_movement;
+                        float current_velocity = t2::math::clamp(0 + t2::game_data::demo::camera_axis_movement_y.acceleration_per_second * delta_time_for_camera_movement /* / t2::game_data::demo::fps */, 0 * t2::game_data::demo::camera_axis_movement_y.minimum_velocity, t2::game_data::demo::camera_axis_movement_y.maximum_velocity);
 
-                    position += direction.Unit() * t2::game_data::demo::camera_axis_movement_y.current_velocity;
+                        t2::game_data::demo::camera_axis_movement_y.current_velocity = current_velocity;
+
+                        position -= direction.Unit() * t2::game_data::demo::camera_axis_movement_y.current_velocity * delta_time;
+                    } else if (t2::game_data::demo::camera_axis_movement_y.state == t2::game_data::demo::CameraAxisMovement::State::kDecelerating) {
+                        double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_y.deceleration_timestamp.QuadPart)) / frequency.QuadPart) /*/ t2::game_data::demo::speed_hack_scale*/;
+
+                        float current_velocity = t2::math::clamp(t2::game_data::demo::camera_axis_movement_y.velocity_before_deceleration - t2::game_data::demo::camera_axis_movement_y.deceleration_per_second * delta_time_for_camera_movement /* / t2::game_data::demo::fps */, 0 * t2::game_data::demo::camera_axis_movement_y.minimum_velocity, t2::game_data::demo::camera_axis_movement_y.maximum_velocity);
+
+                        t2::game_data::demo::camera_axis_movement_y.current_velocity = current_velocity;
+                        if (current_velocity == 0) {
+                            t2::game_data::demo::camera_axis_movement_y.state = t2::game_data::demo::CameraAxisMovement::State::kStopped;
+                            t2::game_data::demo::camera_axis_movement_y.direction = t2::game_data::demo::CameraAxisMovement::Direction::kNone;
+                        }
+
+                        position -= direction.Unit() * t2::game_data::demo::camera_axis_movement_y.current_velocity * delta_time;
+                    }
                 }
             }
-            if (t2::game_data::demo::camera_axis_movement_y.direction == t2::game_data::demo::CameraAxisMovement::Direction::kNegative) {  // backward
+
+            if (t2::game_data::demo::camera_axis_movement_x.state != t2::game_data::demo::CameraAxisMovement::State::kStopped) {
+                float position_z_backup = position.z_;
+                if (t2::game_data::demo::camera_axis_movement_x.direction == t2::game_data::demo::CameraAxisMovement::Direction::kNegative) {  // left
+                    direction = t2::math::Vector(direction.y_, -direction.x_, direction.z_).Unit();                                            // right vector
+                    if (t2::game_data::demo::camera_axis_movement_x.state == t2::game_data::demo::CameraAxisMovement::State::kAccelerating) {
+                        double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_x.acceleration_timestamp.QuadPart)) / frequency.QuadPart) /*/ t2::game_data::demo::speed_hack_scale*/;
+
+                        float current_velocity = t2::math::clamp(0 + t2::game_data::demo::camera_axis_movement_x.acceleration_per_second * delta_time_for_camera_movement /*/ t2::game_data::demo::fps*/, 0 * t2::game_data::demo::camera_axis_movement_x.minimum_velocity, t2::game_data::demo::camera_axis_movement_x.maximum_velocity);
+
+                        t2::game_data::demo::camera_axis_movement_x.current_velocity = current_velocity;
+
+                        position -= direction.Unit() * t2::game_data::demo::camera_axis_movement_x.current_velocity * delta_time;
+                    } else if (t2::game_data::demo::camera_axis_movement_x.state == t2::game_data::demo::CameraAxisMovement::State::kDecelerating) {
+                        double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_x.deceleration_timestamp.QuadPart)) / frequency.QuadPart);
+
+                        float current_velocity = t2::math::clamp(t2::game_data::demo::camera_axis_movement_x.velocity_before_deceleration - t2::game_data::demo::camera_axis_movement_x.deceleration_per_second * delta_time_for_camera_movement /*/ t2::game_data::demo::fps*/, 0 * t2::game_data::demo::camera_axis_movement_x.minimum_velocity, t2::game_data::demo::camera_axis_movement_x.maximum_velocity);
+
+                        t2::game_data::demo::camera_axis_movement_x.current_velocity = current_velocity;
+                        if (current_velocity == 0) {
+                            t2::game_data::demo::camera_axis_movement_x.state = t2::game_data::demo::CameraAxisMovement::State::kStopped;
+                            t2::game_data::demo::camera_axis_movement_x.direction = t2::game_data::demo::CameraAxisMovement::Direction::kNone;
+                        }
+
+                        position -= direction.Unit() * t2::game_data::demo::camera_axis_movement_x.current_velocity * delta_time;
+                    }
+                }
+
+                if (t2::game_data::demo::camera_axis_movement_x.direction == t2::game_data::demo::CameraAxisMovement::Direction::kPositive) {  // right
+                    direction = t2::math::Vector(direction.y_, -direction.x_, direction.z_).Unit();                                            // right vector
+                    if (t2::game_data::demo::camera_axis_movement_x.state == t2::game_data::demo::CameraAxisMovement::State::kAccelerating) {
+                        double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_x.acceleration_timestamp.QuadPart)) / frequency.QuadPart) /*/ t2::game_data::demo::speed_hack_scale*/;
+
+                        float current_velocity = t2::math::clamp(0 + t2::game_data::demo::camera_axis_movement_x.acceleration_per_second * delta_time_for_camera_movement /*/ t2::game_data::demo::fps*/, 0 * t2::game_data::demo::camera_axis_movement_x.minimum_velocity, t2::game_data::demo::camera_axis_movement_x.maximum_velocity);
+
+                        t2::game_data::demo::camera_axis_movement_x.current_velocity = current_velocity;
+
+                        position += direction.Unit() * t2::game_data::demo::camera_axis_movement_x.current_velocity * delta_time;
+                    } else if (t2::game_data::demo::camera_axis_movement_x.state == t2::game_data::demo::CameraAxisMovement::State::kDecelerating) {
+                        double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_x.deceleration_timestamp.QuadPart)) / frequency.QuadPart);
+
+                        float current_velocity = t2::math::clamp(t2::game_data::demo::camera_axis_movement_x.velocity_before_deceleration - t2::game_data::demo::camera_axis_movement_x.deceleration_per_second * delta_time_for_camera_movement /*/ t2::game_data::demo::fps*/, 0 * t2::game_data::demo::camera_axis_movement_x.minimum_velocity, t2::game_data::demo::camera_axis_movement_x.maximum_velocity);
+
+                        t2::game_data::demo::camera_axis_movement_x.current_velocity = current_velocity;
+                        if (current_velocity == 0) {
+                            t2::game_data::demo::camera_axis_movement_x.state = t2::game_data::demo::CameraAxisMovement::State::kStopped;
+                            t2::game_data::demo::camera_axis_movement_x.direction = t2::game_data::demo::CameraAxisMovement::Direction::kNone;
+                        }
+
+                        position += direction.Unit() * t2::game_data::demo::camera_axis_movement_x.current_velocity * delta_time;
+                    }
+                }
+                position.z_ = position_z_backup;
+            }
+        } else if (t2::game_data::demo::camera_axis_movement_type == t2::game_data::demo::CameraAxisMovementType::kInstant) {
+            if (keys::key_states[0x57]) {
                 // direction.z_ = 0;
-                if (t2::game_data::demo::camera_axis_movement_y.state == t2::game_data::demo::CameraAxisMovement::State::kAccelerating) {
-                    double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_y.acceleration_timestamp.QuadPart)) / frequency.QuadPart) / t2::game_data::demo::speed_hack_scale;
-
-                    float current_velocity = t2::math::clamp(0 + t2::game_data::demo::camera_axis_movement_y.acceleration_per_second * delta_time_for_camera_movement /* / t2::game_data::demo::fps */, 0 * t2::game_data::demo::camera_axis_movement_y.minimum_velocity, t2::game_data::demo::camera_axis_movement_y.maximum_velocity);
-
-                    t2::game_data::demo::camera_axis_movement_y.current_velocity = current_velocity;
-
-                    position -= direction.Unit() * t2::game_data::demo::camera_axis_movement_y.current_velocity;
-                } else if (t2::game_data::demo::camera_axis_movement_y.state == t2::game_data::demo::CameraAxisMovement::State::kDecelerating) {
-                    double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_y.deceleration_timestamp.QuadPart)) / frequency.QuadPart) / t2::game_data::demo::speed_hack_scale;
-
-                    float current_velocity = t2::math::clamp(t2::game_data::demo::camera_axis_movement_y.velocity_before_deceleration - t2::game_data::demo::camera_axis_movement_y.deceleration_per_second * delta_time_for_camera_movement /* / t2::game_data::demo::fps */, 0 * t2::game_data::demo::camera_axis_movement_y.minimum_velocity, t2::game_data::demo::camera_axis_movement_y.maximum_velocity);
-
-                    t2::game_data::demo::camera_axis_movement_y.current_velocity = current_velocity;
-                    if (current_velocity == 0) {
-                        t2::game_data::demo::camera_axis_movement_y.state = t2::game_data::demo::CameraAxisMovement::State::kStopped;
-                        t2::game_data::demo::camera_axis_movement_y.direction = t2::game_data::demo::CameraAxisMovement::Direction::kNone;
-                    }
-
-                    position -= direction.Unit() * t2::game_data::demo::camera_axis_movement_y.current_velocity;
-                }
+                position += direction.Unit() * settings::camera_move_speed_xy / t2::game_data::demo::speed_hack_scale;
             }
-        }
-
-        if (t2::game_data::demo::camera_axis_movement_x.state != t2::game_data::demo::CameraAxisMovement::State::kStopped) {
-            float position_z_backup = position.z_;
-            if (t2::game_data::demo::camera_axis_movement_x.direction == t2::game_data::demo::CameraAxisMovement::Direction::kNegative) {  // left
-                direction = t2::math::Vector(direction.y_, -direction.x_, direction.z_).Unit();                                                       // right vector
-                if (t2::game_data::demo::camera_axis_movement_x.state == t2::game_data::demo::CameraAxisMovement::State::kAccelerating) {
-                    double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_x.acceleration_timestamp.QuadPart)) / frequency.QuadPart) / t2::game_data::demo::speed_hack_scale;
-
-                    float current_velocity = t2::math::clamp(0 + t2::game_data::demo::camera_axis_movement_x.acceleration_per_second * delta_time_for_camera_movement /*/ t2::game_data::demo::fps*/, 0 * t2::game_data::demo::camera_axis_movement_x.minimum_velocity, t2::game_data::demo::camera_axis_movement_x.maximum_velocity);
-
-                    t2::game_data::demo::camera_axis_movement_x.current_velocity = current_velocity;
-
-                    position -= direction.Unit() * t2::game_data::demo::camera_axis_movement_x.current_velocity;
-                } else if (t2::game_data::demo::camera_axis_movement_x.state == t2::game_data::demo::CameraAxisMovement::State::kDecelerating) {
-                    double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_x.deceleration_timestamp.QuadPart)) / frequency.QuadPart);
-
-                    float current_velocity = t2::math::clamp(t2::game_data::demo::camera_axis_movement_x.velocity_before_deceleration - t2::game_data::demo::camera_axis_movement_x.deceleration_per_second * delta_time_for_camera_movement /*/ t2::game_data::demo::fps*/, 0 * t2::game_data::demo::camera_axis_movement_x.minimum_velocity, t2::game_data::demo::camera_axis_movement_x.maximum_velocity);
-
-                    t2::game_data::demo::camera_axis_movement_x.current_velocity = current_velocity;
-                    if (current_velocity == 0) {
-                        t2::game_data::demo::camera_axis_movement_x.state = t2::game_data::demo::CameraAxisMovement::State::kStopped;
-                        t2::game_data::demo::camera_axis_movement_x.direction = t2::game_data::demo::CameraAxisMovement::Direction::kNone;
-                    }
-
-                    position -= direction.Unit() * t2::game_data::demo::camera_axis_movement_x.current_velocity;
-                }
+            if (keys::key_states[0x53]) {
+                // direction.z_ = 0;
+                position += direction.Unit() * -1 * settings::camera_move_speed_xy / t2::game_data::demo::speed_hack_scale;
             }
-
-            if (t2::game_data::demo::camera_axis_movement_x.direction == t2::game_data::demo::CameraAxisMovement::Direction::kPositive) {  // right
-                direction = t2::math::Vector(direction.y_, -direction.x_, direction.z_).Unit();                                                       // right vector
-                if (t2::game_data::demo::camera_axis_movement_x.state == t2::game_data::demo::CameraAxisMovement::State::kAccelerating) {
-                    double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_x.acceleration_timestamp.QuadPart)) / frequency.QuadPart) / t2::game_data::demo::speed_hack_scale;
-
-                    float current_velocity = t2::math::clamp(0 + t2::game_data::demo::camera_axis_movement_x.acceleration_per_second * delta_time_for_camera_movement /*/ t2::game_data::demo::fps*/, 0 * t2::game_data::demo::camera_axis_movement_x.minimum_velocity, t2::game_data::demo::camera_axis_movement_x.maximum_velocity);
-
-                    t2::game_data::demo::camera_axis_movement_x.current_velocity = current_velocity;
-
-                    position += direction.Unit() * t2::game_data::demo::camera_axis_movement_x.current_velocity;
-                } else if (t2::game_data::demo::camera_axis_movement_x.state == t2::game_data::demo::CameraAxisMovement::State::kDecelerating) {
-                    double delta_time_for_camera_movement = (((double)(current_performance_counter.QuadPart - t2::game_data::demo::camera_axis_movement_x.deceleration_timestamp.QuadPart)) / frequency.QuadPart);
-
-                    float current_velocity = t2::math::clamp(t2::game_data::demo::camera_axis_movement_x.velocity_before_deceleration - t2::game_data::demo::camera_axis_movement_x.deceleration_per_second * delta_time_for_camera_movement /*/ t2::game_data::demo::fps*/, 0 * t2::game_data::demo::camera_axis_movement_x.minimum_velocity, t2::game_data::demo::camera_axis_movement_x.maximum_velocity);
-
-                    t2::game_data::demo::camera_axis_movement_x.current_velocity = current_velocity;
-                    if (current_velocity == 0) {
-                        t2::game_data::demo::camera_axis_movement_x.state = t2::game_data::demo::CameraAxisMovement::State::kStopped;
-                        t2::game_data::demo::camera_axis_movement_x.direction = t2::game_data::demo::CameraAxisMovement::Direction::kNone;
-                    }
-
-                    position += direction.Unit() * t2::game_data::demo::camera_axis_movement_x.current_velocity;
-                }
+            if (keys::key_states[0x41]) {
+                direction = t2::math::Vector(direction.y_, -direction.x_, 0).Unit();  // right vector
+                position += direction.Unit() * -1 * settings::camera_move_speed_xy / t2::game_data::demo::speed_hack_scale;
             }
-            position.z_ = position_z_backup;
+            if (keys::key_states[0x44]) {
+                direction = t2::math::Vector(direction.y_, -direction.x_, 0).Unit();  // right vector
+                position += direction.Unit() * settings::camera_move_speed_xy / t2::game_data::demo::speed_hack_scale;
+            }
         }
 
         if (keys::mouse_states[0]) {
             direction = t2::math::Vector(0, 0, 1).Unit();
-            position += direction.Unit() * -1 * settings::camera_move_speed_z;
+            position += direction.Unit() * -1 * settings::camera_move_speed_z / t2::game_data::demo::speed_hack_scale;
         }
         if (keys::mouse_states[1]) {
             direction = t2::math::Vector(0, 0, 1).Unit();
-            position += direction.Unit() * 1 * settings::camera_move_speed_z;
+            position += direction.Unit() * 1 * settings::camera_move_speed_z / t2::game_data::demo::speed_hack_scale;
         }
 
         /*

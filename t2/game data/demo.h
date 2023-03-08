@@ -59,9 +59,33 @@ namespace t2 {
 				float velocity_before_deceleration = 0.0;
 			};
 
+			struct CameraAxisRotation{
+				enum class State {kStopped, kAccelerating, kDecelerating};
+				enum class Direction {kNone, kPositive, kNegative};
+
+				State state = State::kStopped;
+				Direction direction = Direction::kNone;
+				LARGE_INTEGER acceleration_timestamp = {0};
+				LARGE_INTEGER deceleration_timestamp = {0};
+				float acceleration_per_second = 1.0;
+				float deceleration_per_second = 2.0;
+				float maximum_velocity = 0.5;
+				float minimum_velocity = 0.0;
+				float current_velocity = 0.0;
+				float velocity_before_deceleration = 0.0;
+			};
+
 			 extern CameraAxisMovement camera_axis_movement_x;
 			 extern CameraAxisMovement camera_axis_movement_y;
 			 extern CameraAxisMovement camera_axis_movement_z;
+
+			 extern CameraAxisRotation camera_axis_rotation_pitch;
+			 extern CameraAxisRotation camera_axis_rotation_yaw;
+
+			 enum class CameraAxisMovementType {kInstant, KAcceleration};
+			 extern CameraAxisMovementType camera_axis_movement_type;
+			 enum class CameraAxisRotationType {kInstant, kAcceleration};
+			 extern CameraAxisRotationType camera_axis_rotation_type;
 		}
 	}
 }

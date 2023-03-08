@@ -39,6 +39,11 @@ namespace t2 {
 			CameraAxisMovement camera_axis_movement_y;
 			CameraAxisMovement camera_axis_movement_z;
 
+			CameraAxisRotation camera_axis_rotation_pitch;
+			CameraAxisRotation camera_axis_rotation_yaw;
+
+			CameraAxisMovementType camera_axis_movement_type = CameraAxisMovementType::kInstant;
+			CameraAxisRotationType camera_axis_rotation_type = CameraAxisRotationType::kInstant;
 			//QueryPerformanceCounter_ OriginalQueryPerformanceCounter = NULL;
 
 			void ToggleViewTarget(void){

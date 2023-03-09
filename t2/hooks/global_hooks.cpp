@@ -10,7 +10,7 @@
 #include <t2/game data/player.h>
 #include <t2/settings/settings.h>
 
-t2::math::Matrix player_matrix;
+//t2::math::Matrix player_matrix;
 
 namespace t2 {
 namespace hooks {
@@ -37,6 +37,14 @@ FpsUpdate OriginalFpsUpdate = (FpsUpdate)0x00564570;
 void FpsUpdateHook(void) {
     OriginalFpsUpdate();
 
+    /*
+    if (t2::game_data::demo::is_player_alive){
+        static char name_str_buffer[256];
+        t2::hooks::other_unknown::OriginalGetGameObjectName(t2::game_data::demo::player, name_str_buffer, 256);
+        PLOG_DEBUG << name_str_buffer;
+    }
+    */
+
     *((unsigned int*)0x0079B3E4) = t2::settings::show_player_model;
     *((unsigned int*)0x0079B3E8) = t2::settings::show_weapon_model;
 
@@ -53,7 +61,7 @@ void FpsUpdateHook(void) {
     // QueryPerformanceCounter(&performance_count);
     t2::hooks::OriginalQueryPerformanceCounter(&performance_count);
     double delta_time = (((double)(performance_count.QuadPart - previous_performance_count.QuadPart)) / frequency.QuadPart) * 1000.0f;
-    // PLOG_DEBUG << "Delta time = " << delta_time;
+    PLOG_DEBUG << "Delta time = " << delta_time;
 
     previous_performance_count = performance_count;
 
@@ -70,17 +78,17 @@ void FpsUpdateHook(void) {
     *((float*)0x762A40) = 1;
     */
 
-   PLOG_DEBUG << "Delta time mul by scale : " << (delta_time * t2::game_data::demo::speed_hack_scale);
-   PLOG_DEBUG << "Delta time div by scale : " << (delta_time / t2::game_data::demo::speed_hack_scale);
+    // PLOG_DEBUG << "Delta time mul by scale : " << (delta_time * t2::game_data::demo::speed_hack_scale);
+    // PLOG_DEBUG << "Delta time div by scale : " << (delta_time / t2::game_data::demo::speed_hack_scale);
 
     if (keys::key_states[0x5A]) {  // z key - zoom out
-        t2::settings::camera_fov += (t2::game_data::demo::zoom_fov_delta_per_second * (delta_time/1000.0f));
+        t2::settings::camera_fov += (t2::game_data::demo::zoom_fov_delta_per_second * (delta_time / 1000.0f));
         if (t2::settings::camera_fov > t2::game_data::demo::max_fov) {
             t2::settings::camera_fov = t2::game_data::demo::max_fov;
         }
     }
     if (keys::key_states[0x58]) {  // x key - zoom in
-        t2::settings::camera_fov -= (t2::game_data::demo::zoom_fov_delta_per_second * (delta_time/1000.0f));
+        t2::settings::camera_fov -= (t2::game_data::demo::zoom_fov_delta_per_second * (delta_time / 1000.0f));
         if (t2::settings::camera_fov < t2::game_data::demo::min_fov) {
             t2::settings::camera_fov = t2::game_data::demo::min_fov;
         }
@@ -639,7 +647,7 @@ void __fastcall RenderChildControlsHook(void* this_gui_object, void* _, void* ar
             t2::abstraction::SimObject some_sim_obj(some_obj);
             std::string some_sim_obj_name(some_sim_obj.namespace_name_);
             // PLOG_DEBUG << some_sim_obj.namespace_name_;
-            if (some_sim_obj_name == "navHud" || is_demo_gui) {
+            if (some_sim_obj_name == "navHud" || is_demo_gui) {  // keep IFFs and demo window -> we will hide IFFs simply by breaking GluProject
                 *(BYTE*)((unsigned int)some_obj + 76) = true;
             } else {
                 *(BYTE*)((unsigned int)some_obj + 76) = false;
@@ -664,19 +672,65 @@ void __fastcall RenderChildControlsHook(void* this_gui_object, void* _, void* ar
     return;
 }
 
+bool early_exit_sub_506870 = false;
+bool early_exit_sub_509370 = false;
+bool early_exit_sub_505740 = false;
+bool early_exit_sub_505380 = false;
+
 sub_505740 Originalsub_505740 = (sub_505740)0x505740;
-char* __fastcall sub_505740Hook(void*, void*, void*, void*, void*) {
+char* __fastcall sub_505740Hook(void* arg1, void* arg2____UNUSED, void* arg3, void* arg4, void* arg5) {
+    // THIS FUNCTION HAS NOTHING TO DO WITH DRAWING NAMES AND DAMAGE
+    if (early_exit_sub_505740)
+        return NULL;
+
+    if (arg5 != NULL) {
+        Originalsub_505740(arg1, arg3, arg4, arg5);  // draws player healthbar and name, along with flag and stuff, but ignores player chevron IFFs
+    } else {
+    }
     return NULL;
 }
 
 sub_506870 Originalsub_506870 = (sub_506870)0x506870;
-char __fastcall sub_506870Hook(void*, void*, void*, void*, void*) {
-    return '\0';
+char __fastcall sub_506870Hook(void* arg1, void* unused, void* arg2, void* arg3, void* arg4) {
+    /*
+    int counter = 0;
+    for (int i=0;  *(DWORD *)((unsigned int)arg1 + 196) && counter < *(DWORD *)((unsigned int)arg1 + 196) ;i+=32){
+        Originalsub_505380(arg1, (void*)(i + *(DWORD *)((unsigned int)arg1 + 204)));
+        t2::math::Vector* vec = (t2::math::Vector*)(int *)(i + *(DWORD *)((unsigned int)arg1 + 204) + 8);
+        t2::abstraction::SimObject s((void*)*(int *)(i + *(DWORD *)((unsigned int)arg1 + 204) + 0x14));
+        PLOG_DEBUG << s.namespace_name_;
+        PLOG_DEBUG << "x = " << vec->x_ << ", y = " << vec->y_ << ", z = " << vec->z_;
+        counter++;
+    }
+    */
+
+    if (early_exit_sub_506870)
+        return '\0';
+    return Originalsub_506870(arg1, arg2, arg3, arg4);
 }
 
 extern sub_5046A0 Originalsub_5046A0 = (sub_5046A0)0x5046A0;
 int(__fastcall sub_5046A0Hook)(void*, void*, void*, void*, void*, void*, void*) {
     return 0;
+}
+
+sub_509370 Originalsub_509370 = (sub_509370)0x509370;
+int __fastcall sub_509370Hook(void* arg1, void*, void* arg2) {
+    if (early_exit_sub_509370)
+        return false;
+    return Originalsub_509370(arg1, arg2);
+}
+
+sub_505380 Originalsub_505380 = (sub_505380)0x505380;
+int __fastcall sub_505380Hook(void* arg1, void*, void* arg2) {
+    // int id = GET_OBJECT_VARIABLE_BY_OFFSET(unsigned int, arg2, 32);
+    // PLOG_DEBUG << "ID = " << id;
+    // PLOG_DEBUG << s.namespace_name_;
+    // t2::hooks::simbase::OriginalDump(t2::game_data::demo::player);
+    PLOG_DEBUG << *(DWORD*)((unsigned int)arg1 + 196);
+    if (early_exit_sub_505380)
+        return false;
+    return Originalsub_505380(arg1, arg2);
 }
 
 }  // namespace guicontrol
@@ -755,5 +809,46 @@ void __stdcall GetElapsedMSHook2(void) {
     some_func_((void*)*obj, &three);
 }
 }  // namespace wintimer
+
+namespace simbase {
+Dump OriginalDump = (Dump)0x00436020;
+}
+
+namespace dgl {
+// 00446070
+std::vector<std::tuple<std::string, ImVec2, ImColor>> string_projection_buffer;
+dglDrawTextN OriginaldglDrawTextN = (dglDrawTextN)0x00446070;
+int __cdecl dglDrawTextNHook(void* arg1, void* point2d, void* str, void* arg2, void* arg3, void* arg4) {
+    DWORD dwWaitResult = WaitForSingleObject(t2::hooks::opengl::game_mutex, INFINITE);
+
+    BYTE r = *(BYTE*)(0x7ED0D8);
+    BYTE g = *(BYTE*)(0x7ED0D9);
+    BYTE b = *(BYTE*)(0x7ED0DA);
+    BYTE a = *(BYTE*)(0x7ED0DB);
+
+    std::tuple<std::string, ImVec2, ImColor> tuple;
+    std::get<0>(tuple) = std::string((char*)str);
+    std::get<1>(tuple) = ImVec2((float)*(int*)point2d, (float)*((int*)point2d + 1));
+    std::get<2>(tuple) = ImColor(r, g, b, a);
+
+    tuple = std::make_tuple(std::string((char*)str), ImVec2((float)*(int*)point2d, (float)*((int*)point2d + 1)), ImColor(r, g, b, a));
+
+    string_projection_buffer.push_back(tuple);
+
+    *(BYTE*)(0x7ED0D8) = -1;
+    *(BYTE*)(0x7ED0D9) = -1;
+    *(BYTE*)(0x7ED0DA) = -1;
+    *(BYTE*)(0x7ED0DB) = -1;
+
+    ReleaseMutex(t2::hooks::opengl::game_mutex);
+    return 1;
+    return OriginaldglDrawTextN(arg1, point2d, str, arg2, arg3, arg4);
+}
+}  // namespace dgl
+
+namespace other_unknown{
+    GetGameObjectName OriginalGetGameObjectName = (GetGameObjectName)0x5E3060;
+}
+
 }  // namespace hooks
 }  // namespace t2

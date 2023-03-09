@@ -261,6 +261,25 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
     // PLOG_DEBUG << "HDC = " << (unsigned int)arg1;
 
 #ifdef USE_IMGUI
+    static ImGuiIO* io = nullptr;
+    if (!io) {
+        io = &ImGui::GetIO();
+    }
+
+    static ImFont* font = NULL;
+    if (!font && io) {
+        ImFontConfig config_;
+        config_.SizePixels = (int)(((ImFont*)io->Fonts->AddFontDefault())->FontSize * 2);
+
+        font = io->Fonts->AddFontFromFileTTF("C:\\Users\\Administrator0\\AppData\\Local\\Microsoft\\Windows\\Fonts\\mononoki-Regular.ttf", 16, NULL, io->Fonts->GetGlyphRangesDefault());
+        ImFontConfig config;
+        config.MergeMode = true;
+        config.GlyphMinAdvanceX = 0.0f;  // Use if you want to make the icon monospaced
+        static const ImWchar icon_ranges[] = {0x25A0, 0x25FF, 0};
+        io->Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\L_10646.ttf", 32, &config, icon_ranges);
+        io->Fonts->Build();
+    }
+
     ImGui_ImplOpenGL2_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
@@ -271,20 +290,6 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
     */
 
     DWORD dwWaitResult = WaitForSingleObject(t2::hooks::opengl::game_mutex, INFINITE);
-
-    /*
-    ImGui::SetNextWindowPos({ 0, 0 });
-    ImGui::SetNextWindowSize({ 1920, 1080 });
-    ImGui::Begin("window", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBringToFrontOnFocus);
-
-    ImDrawList* imgui_draw_list = ImGui::GetWindowDrawList();
-    //opengl projects from bottom left of screen
-    for (int i = 0; i < t2::hooks::opengl::projection_buffer.size(); i++) {
-            imgui_draw_list->AddCircleFilled({ t2::hooks::opengl::projection_buffer[i].x, (float)t2::hooks::opengl::projection_buffer[i].y }, 6, ImColor(255, 255, 0, 255), 0);
-    }
-
-    ImGui::End();
-    */
 
     if (show_imgui_demo_window) {
         ImGui::Begin("Settings", NULL, ImGuiWindowFlags_AlwaysAutoResize);
@@ -343,6 +348,14 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
         ImGui::Checkbox("Show weapon model", &t2::settings::show_weapon_model);
         ImGui::Separator();
         ImGui::SliderFloat("Speed scale", &t2::game_data::demo::speed_hack_scale, 0.1, 10, "%.3f", ImGuiSliderFlags_::ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_::ImGuiSliderFlags_AlwaysClamp);
+
+        ImGui::Separator();
+        /*
+        ImGui::Checkbox("early_exit_sub_506870", &t2::hooks::guicontrol::early_exit_sub_506870);
+        ImGui::Checkbox("early_exit_sub_509370", &t2::hooks::guicontrol::early_exit_sub_509370);
+        ImGui::Checkbox("early_exit_sub_505740", &t2::hooks::guicontrol::early_exit_sub_505740);
+        ImGui::Checkbox("early_exit_sub_505380", &t2::hooks::guicontrol::early_exit_sub_505380);
+        */
 
 #ifdef USE_AIMTRACKER
         ImGui::BeginGroup();
@@ -461,13 +474,47 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 
 #endif
 
+    ImGui::SetNextWindowPos({0, 0});
+    ImVec2 display_size = ImGui::GetIO().DisplaySize;
+    ImGui::SetNextWindowSize(display_size);
+    ImGui::Begin("overlay_window", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBringToFrontOnFocus);
+
+    if (font) {
+        ImGui::PushFont(font);
+    }
+
+    ImDrawList* imgui_draw_list = ImGui::GetWindowDrawList();
+    // opengl projects from bottom left of screen
+    for (int i = 0; i < t2::hooks::opengl::projection_buffer.size(); i++) {
+        imgui_draw_list->AddCircleFilled({t2::hooks::opengl::projection_buffer[i].x, (float)t2::hooks::opengl::projection_buffer[i].y}, 6, ImColor(255, 255, 0, 255), 0);
+    }
+
+    for (int i = 0; i < t2::hooks::dgl::string_projection_buffer.size(); i++) {
+        imgui_draw_list->AddText(std::get<1>(t2::hooks::dgl::string_projection_buffer[i]), std::get<2>(t2::hooks::dgl::string_projection_buffer[i]), std::get<0>(t2::hooks::dgl::string_projection_buffer[i]).c_str());
+    }
+    
+    ImGui::GetFont()->Scale = 3;
+    ImGui::PushFont(ImGui::GetFont());
+    auto windowWidth = ImGui::GetWindowSize().x;
+    auto textWidth = ImGui::CalcTextSize("Observing R!v3r").x;
+    imgui_draw_list->AddText(ImVec2((windowWidth - textWidth) * 0.5f, 0.8 * ImGui::GetWindowSize().y), ImColor(255, 255, 255, 255), "Observing R!v3r");
+    ImGui::GetFont()->Scale = 1;
+    ImGui::PopFont();
+    
+    if (font) {
+        ImGui::PopFont();
+    }
+    ImGui::End();
+
     t2::hooks::opengl::projection_buffer.clear();
+    t2::hooks::dgl::string_projection_buffer.clear();
 
     ReleaseMutex(t2::hooks::opengl::game_mutex);
 
     ImGui::EndFrame();
     ImGui::Render();
     ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+
 #endif
 
     return OriginalwglSwapBuffers(arg1);
@@ -568,21 +615,28 @@ void OnDLLProcessAttach(void) {
 
     DetourAttach(&(PVOID&)t2::abstraction::hooks::Camera::OriginalSetPosition, t2::abstraction::hooks::Camera::SetPositionHook);
 
-    // DetourAttach(&(PVOID&)t2::abstraction::hooks::Player::OriginalPlayerSetRenderPosition, t2::abstraction::hooks::Player::SetRenderPositionHook);
+    DetourAttach(&(PVOID&)t2::abstraction::hooks::Player::OriginalPlayerSetRenderPosition, t2::abstraction::hooks::Player::SetRenderPositionHook);  // Just hooking this to get all players and then get their names from there
 
     DetourAttach(&(PVOID&)t2::hooks::platform::OriginalSetWindowLocked, t2::hooks::platform::SetWindowLockedHook);
 
-    DetourAttach(&(PVOID&)t2::hooks::guicanvas::OriginalRenderFrame, t2::hooks::guicanvas::RenderFrameHook);
+    // DetourAttach(&(PVOID&)t2::hooks::guicanvas::OriginalRenderFrame, t2::hooks::guicanvas::RenderFrameHook);
+
     DetourAttach(&(PVOID&)t2::hooks::guicontrol::OriginalOnRender, t2::hooks::guicontrol::OnRenderHook);
     DetourAttach(&(PVOID&)t2::hooks::guicontrol::OriginalOnRender2, t2::hooks::guicontrol::OnRenderHook2);
-    /**/
     DetourAttach(&(PVOID&)t2::hooks::guicontrol::OriginalRenderChildControls, t2::hooks::guicontrol::RenderChildControlsHook);
 
     // DetourAttach(&(PVOID&)t2::hooks::wintimer::OriginalGetElapsedMS, t2::hooks::wintimer::GetElapsedMSHook);
 
-    //(&(PVOID&)t2::hooks::guicontrol::Originalsub_505740, t2::hooks::guicontrol::sub_505740Hook); // called by sub_506870, this is what draws the IFFs
-    // DetourAttach(&(PVOID&)t2::hooks::guicontrol::Originalsub_5046A0, t2::hooks::guicontrol::sub_5046A0Hook); // called by sub_506870, this is required to draw both IFFS and player name and health bar
-    // DetourAttach(&(PVOID&)t2::hooks::guicontrol::Originalsub_506870, t2::hooks::guicontrol::sub_506870Hook); // this calls sub_506870, this draws the player name and health bar
+    /*
+    DetourAttach(&(PVOID&)t2::hooks::guicontrol::Originalsub_505740, t2::hooks::guicontrol::sub_505740Hook); // called by sub_506870, this is what draws the IFFs ONLY
+    //DetourAttach(&(PVOID&)t2::hooks::guicontrol::Originalsub_5046A0, t2::hooks::guicontrol::sub_5046A0Hook); // called by sub_506870, this is required to draw both IFFS and player name and health bar
+    DetourAttach(&(PVOID&)t2::hooks::guicontrol::Originalsub_506870, t2::hooks::guicontrol::sub_506870Hook); // this calls sub_505740 & sub_509370 , this draws the player name and health bar, this is the main function
+    DetourAttach(&(PVOID&)t2::hooks::guicontrol::Originalsub_509370, t2::hooks::guicontrol::sub_509370Hook); // testing purposes
+
+    DetourAttach(&(PVOID&)t2::hooks::guicontrol::Originalsub_505380, t2::hooks::guicontrol::sub_505380Hook); // testing purposes, blocking this results in NAME + healthbar being hidden
+    */
+
+    DetourAttach(&(PVOID&)t2::hooks::dgl::OriginaldglDrawTextN, t2::hooks::dgl::dglDrawTextNHook);
 
     if (OriginalSetWindowLongPtr)
         DetourAttach(&(PVOID&)OriginalSetWindowLongPtr, SetWindowLongPtrHook);
@@ -597,8 +651,13 @@ void OnDLLProcessAttach(void) {
     }
 #endif
 
+
+    /*
+    This is just obliterate all IFF related stuff -> so we hide player chevrons, player names, mission markers (waypoints) and flag/flag bases all at once. We can't pick and choose what to hide -> so let's find one of the GUI classes OnRender functions and try to hide things separately from there
+    
     if (t2::hooks::opengl::OriginalGluProject)
         DetourAttach(&(PVOID&)t2::hooks::opengl::OriginalGluProject, t2::hooks::opengl::GluProjectHook);
+    */
 
     if (t2::hooks::OriginalQueryPerformanceCounter) {
         DetourAttach(&(PVOID&)t2::hooks::OriginalQueryPerformanceCounter, QueryPerformanceCounterHook);

@@ -32,7 +32,7 @@ void __fastcall SetRenderPositionHook(void* this_player, void* _, void* arg1, vo
         PLOG_DEBUG << name_str_buffer;
 
 		if (name_str_buffer[0+2] == 'R' && name_str_buffer[1+2] == '!' && name_str_buffer[2+2] == 'v' && name_str_buffer[3+2] == '3' && name_str_buffer[4+2] == 'r'){
-			//t2::game_data::demo::player = this_player;
+			t2::game_data::demo::player = this_player;
 		}
 	}
 

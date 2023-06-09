@@ -267,7 +267,7 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
     }
 
     static ImFont* font = NULL;
-    if (!font && io) {
+    if (!font && io && false) {
         ImFontConfig config_;
         config_.SizePixels = (int)(((ImFont*)io->Fonts->AddFontDefault())->FontSize * 2);
 

@@ -103,7 +103,7 @@ void __fastcall ReadPacketHook(void* this_gameconnection, void* _, void* bitstre
             // t2::abstraction::hooks::Camera::OriginalSetPosition(game_connection.controlling_object_, &t2::game_data::demo::camera_position, &empty);
         }
 
-        t2::game_data::demo::player = game_connection.controlling_object_; //probably want to comment this out when spectating someone other than ourself
+        //t2::game_data::demo::player = game_connection.controlling_object_; //probably want to comment this out when spectating someone other than ourself
         t2::game_data::demo::is_player_alive = true;
         t2::game_data::demo::player_matrix = *target_control_object.object_to_world_;
 

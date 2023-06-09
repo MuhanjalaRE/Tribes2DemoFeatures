@@ -61,7 +61,7 @@ void FpsUpdateHook(void) {
     // QueryPerformanceCounter(&performance_count);
     t2::hooks::OriginalQueryPerformanceCounter(&performance_count);
     double delta_time = (((double)(performance_count.QuadPart - previous_performance_count.QuadPart)) / frequency.QuadPart) * 1000.0f;
-    PLOG_DEBUG << "Delta time = " << delta_time;
+    //PLOG_DEBUG << "Delta time = " << delta_time;
 
     previous_performance_count = performance_count;
 

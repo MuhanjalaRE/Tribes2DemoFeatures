@@ -4,6 +4,7 @@
 #include <t2/game data/demo.h>
 #include <t2/hooks/global_hooks.h>
 #include <t2/settings/settings.h>
+#include <t2/abstraction/Player.h>
 
 #include <string>
 
@@ -103,7 +104,7 @@ void __fastcall ReadPacketHook(void* this_gameconnection, void* _, void* bitstre
             // t2::abstraction::hooks::Camera::OriginalSetPosition(game_connection.controlling_object_, &t2::game_data::demo::camera_position, &empty);
         }
 
-        //t2::game_data::demo::player = game_connection.controlling_object_; //probably want to comment this out when spectating someone other than ourself
+        t2::game_data::demo::demo_player = game_connection.controlling_object_; //probably want to comment this out when spectating someone other than ourself
         t2::game_data::demo::is_player_alive = true;
         t2::game_data::demo::player_matrix = *target_control_object.object_to_world_;
 
@@ -129,6 +130,9 @@ void __fastcall DemoPlayBackCompleteHook(void* this_gameconnection, void* _) {
     t2::game_data::demo::initialised = false;
     OriginalDemoPlayBackComplete(this_gameconnection);
     t2::game_data::demo::first_person = true;
+
+    t2::abstraction::hooks::Player::player_names.clear();
+    t2::abstraction::hooks::Player::player_name_index = -1;
     // t2::game_data::demo::camera_movement_state = t2::game_data::demo::CameraMovementState::kStopped;
 }
 
@@ -160,7 +164,7 @@ bool __fastcall GetControlCameraTransformHook(void* this_gameconnection, void* _
         t2::hooks::other_unknown::OriginalGetGameObjectName(t2::game_data::demo::player, name_str_buffer, 256);
         PLOG_DEBUG << name_str_buffer;
 
-        if (name_str_buffer[0 + 2] == 'R' && name_str_buffer[1 + 2] == '!' && name_str_buffer[2 + 2] == 'v' && name_str_buffer[3 + 2] == '3' && name_str_buffer[4 + 2] == 'r') {
+        if (t2::game_data::demo::player != t2::game_data::demo::demo_player) {
             t2::abstraction::SceneObject player_scene_object(t2::game_data::demo::player);
 
             //::math::Matrix eye_matrix;

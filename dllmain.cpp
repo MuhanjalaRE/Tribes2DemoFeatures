@@ -357,6 +357,34 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
         ImGui::Checkbox("early_exit_sub_505380", &t2::hooks::guicontrol::early_exit_sub_505380);
         */
 
+
+        static std::vector<std::string> player_names;
+        player_names.clear();
+        for (std::unordered_set<std::string>::iterator i = t2::abstraction::hooks::Player::player_names.begin(); i != t2::abstraction::hooks::Player::player_names.end(); i++) {
+            //ImGui::Text(i->c_str());
+            player_names.push_back(*i);
+        }
+        
+
+        ImGui::Text("Spectate player");
+        if (ImGui::BeginCombo("Spectator", t2::abstraction::hooks::Player::spectator_player_name.c_str(), 0))
+        {
+            for (int n = 0; n < t2::abstraction::hooks::Player::player_names.size(); n++)
+            {
+                const bool is_selected = (t2::abstraction::hooks::Player::player_name_index == n);
+                if (ImGui::Selectable(player_names[n].c_str(), is_selected)){
+                    t2::abstraction::hooks::Player::player_name_index = n;
+                    t2::abstraction::hooks::Player::spectator_player_name = player_names[n];
+                }
+                // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+
+
 #ifdef USE_AIMTRACKER
         ImGui::BeginGroup();
 
@@ -496,8 +524,8 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
     ImGui::GetFont()->Scale = 3;
     ImGui::PushFont(ImGui::GetFont());
     auto windowWidth = ImGui::GetWindowSize().x;
-    auto textWidth = ImGui::CalcTextSize("Observing R!v3r").x;
-    imgui_draw_list->AddText(ImVec2((windowWidth - textWidth) * 0.5f, 0.8 * ImGui::GetWindowSize().y), ImColor(255, 255, 255, 255), "Observing R!v3r");
+    auto textWidth = ImGui::CalcTextSize(std::string("Observing ").append(t2::abstraction::hooks::Player::spectator_player_name).c_str()).x;
+    imgui_draw_list->AddText(ImVec2((windowWidth - textWidth) * 0.5f, 0.8 * ImGui::GetWindowSize().y), ImColor(255, 255, 255, 255), std::string("Observing ").append(t2::abstraction::hooks::Player::spectator_player_name).c_str());
     ImGui::GetFont()->Scale = 1;
     ImGui::PopFont();
     
@@ -508,6 +536,7 @@ BOOL __stdcall wglSwapBuffersHook(int* arg1) {
 
     t2::hooks::opengl::projection_buffer.clear();
     t2::hooks::dgl::string_projection_buffer.clear();
+    //t2::abstraction::hooks::Player::player_names.clear();
 
     ReleaseMutex(t2::hooks::opengl::game_mutex);
 

@@ -9,6 +9,7 @@ namespace t2 {
 			//t2::abstraction::Camera camera(NULL);
 			void* game_connection = NULL;
 			void* player = NULL;
+			void* demo_player = NULL;
 			void* camera = NULL;
 			ViewTarget view_target = ViewTarget::kPlayer;
 			bool is_player_alive = false;
